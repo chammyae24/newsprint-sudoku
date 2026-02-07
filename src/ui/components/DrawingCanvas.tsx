@@ -1,5 +1,10 @@
 import React, { useRef, useState } from 'react';
-import { GestureResponderEvent, PanResponder, StyleSheet, View } from 'react-native';
+import {
+  GestureResponderEvent,
+  PanResponder,
+  StyleSheet,
+  View,
+} from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { getDrawingRenderer, isSkiaAvailable } from '../../utils/skiaDetection';
 
@@ -36,7 +41,7 @@ export function DrawingCanvas({
   disabled = false,
 }: DrawingCanvasProps) {
   const renderer = getDrawingRenderer();
-  
+
   // If Skia is available, use SkiaDrawingCanvas
   if (renderer === 'skia' && isSkiaAvailable()) {
     return (
@@ -50,7 +55,7 @@ export function DrawingCanvas({
       />
     );
   }
-  
+
   // Fallback to SVG canvas
   return (
     <SvgDrawingCanvas
@@ -76,13 +81,15 @@ function SvgDrawingCanvas({
   disabled = false,
 }: DrawingCanvasProps) {
   const [paths, setPaths] = useState<DrawingPath[]>([]);
-  const [currentPath, setCurrentPath] = useState<{ x: number; y: number }[]>([]);
+  const [currentPath, setCurrentPath] = useState<{ x: number; y: number }[]>(
+    []
+  );
   const containerRef = useRef<View>(null);
-  
+
   // Use refs to track current values to avoid stale closures in PanResponder
   const pathsRef = useRef<DrawingPath[]>([]);
   const currentPathRef = useRef<{ x: number; y: number }[]>([]);
-  
+
   // Keep refs in sync with state
   pathsRef.current = paths;
   currentPathRef.current = currentPath;
@@ -101,23 +108,24 @@ function SvgDrawingCanvas({
       onPanResponderGrant: (event) => {
         const point = getPoint(event);
         setCurrentPath([point]);
-        
+
         // Check for stylus (Apple Pencil)
         // @ts-ignore - force property may exist on iOS
-        const isStylus = event.nativeEvent.force !== undefined && event.nativeEvent.force > 0;
+        const isStylus =
+          event.nativeEvent.force !== undefined && event.nativeEvent.force > 0;
         if (onStylusDetected) {
           onStylusDetected(isStylus);
         }
       },
       onPanResponderMove: (event) => {
         const point = getPoint(event);
-        setCurrentPath(prev => [...prev, point]);
+        setCurrentPath((prev) => [...prev, point]);
       },
       onPanResponderRelease: () => {
         // Use refs to get current values (avoid stale closure)
         const currentPoints = currentPathRef.current;
         const existingPaths = pathsRef.current;
-        
+
         if (currentPoints.length > 0) {
           const newPath: DrawingPath = {
             points: [...currentPoints],
@@ -127,7 +135,7 @@ function SvgDrawingCanvas({
           const newPaths = [...existingPaths, newPath];
           setPaths(newPaths);
           setCurrentPath([]);
-          
+
           if (onDrawingComplete) {
             onDrawingComplete(newPaths);
           }
@@ -143,14 +151,14 @@ function SvgDrawingCanvas({
       // Single point - draw a small circle
       return `M ${points[0].x} ${points[0].y} L ${points[0].x + 0.1} ${points[0].y + 0.1}`;
     }
-    
+
     let d = `M ${points[0].x} ${points[0].y}`;
-    
+
     if (points.length === 2) {
       d += ` L ${points[1].x} ${points[1].y}`;
       return d;
     }
-    
+
     // Use quadratic bezier curves for smooth lines
     for (let i = 1; i < points.length - 1; i++) {
       const curr = points[i];
@@ -159,18 +167,19 @@ function SvgDrawingCanvas({
       const midY = (curr.y + next.y) / 2;
       d += ` Q ${curr.x} ${curr.y} ${midX} ${midY}`;
     }
-    
+
     // Connect to last point
     const last = points[points.length - 1];
     d += ` L ${last.x} ${last.y}`;
-    
+
     return d;
   };
 
   return (
     <View
       ref={containerRef}
-      style={[styles.container, { width: size, height: size }]}
+      className="overflow-hidden rounded-lg border-2 border-gray-200 bg-white"
+      style={{ width: size, height: size }}
       {...panResponder.panHandlers}
     >
       <Svg width={size} height={size} style={StyleSheet.absoluteFill}>
@@ -186,7 +195,7 @@ function SvgDrawingCanvas({
             fill="none"
           />
         ))}
-        
+
         {/* Render current drawing path */}
         {currentPath.length > 0 && (
           <Path
@@ -217,9 +226,13 @@ function SkiaDrawingCanvas({
   disabled = false,
 }: DrawingCanvasProps) {
   // Lazy load Skia components to avoid crashes in Expo Go
-  const { Canvas, Path: SkiaPath, Skia } = require('@shopify/react-native-skia');
+  const {
+    Canvas,
+    Path: SkiaPath,
+    Skia,
+  } = require('@shopify/react-native-skia');
   const { Gesture, GestureDetector } = require('react-native-gesture-handler');
-  
+
   const [paths, setPaths] = useState<DrawingPath[]>([]);
   const currentPathRef = useRef<{ x: number; y: number }[]>([]);
   const [, forceUpdate] = useState(0);
@@ -229,11 +242,11 @@ function SkiaDrawingCanvas({
     .enabled(!disabled)
     .onBegin((event: { x: number; y: number }) => {
       currentPathRef.current = [{ x: event.x, y: event.y }];
-      forceUpdate(n => n + 1);
+      forceUpdate((n) => n + 1);
     })
     .onUpdate((event: { x: number; y: number }) => {
       currentPathRef.current.push({ x: event.x, y: event.y });
-      forceUpdate(n => n + 1);
+      forceUpdate((n) => n + 1);
     })
     .onEnd(() => {
       if (currentPathRef.current.length > 0) {
@@ -245,7 +258,7 @@ function SkiaDrawingCanvas({
         const newPaths = [...paths, newPath];
         setPaths(newPaths);
         currentPathRef.current = [];
-        
+
         if (onDrawingComplete) {
           onDrawingComplete(newPaths);
         }
@@ -256,9 +269,9 @@ function SkiaDrawingCanvas({
   const createSkiaPath = (points: { x: number; y: number }[]) => {
     const skiaPath = Skia.Path.Make();
     if (points.length === 0) return skiaPath;
-    
+
     skiaPath.moveTo(points[0].x, points[0].y);
-    
+
     for (let i = 1; i < points.length; i++) {
       const curr = points[i];
       const prev = points[i - 1];
@@ -266,12 +279,12 @@ function SkiaDrawingCanvas({
       const midY = (prev.y + curr.y) / 2;
       skiaPath.quadTo(prev.x, prev.y, midX, midY);
     }
-    
+
     if (points.length > 1) {
       const last = points[points.length - 1];
       skiaPath.lineTo(last.x, last.y);
     }
-    
+
     return skiaPath;
   };
 
@@ -284,7 +297,10 @@ function SkiaDrawingCanvas({
 
   return (
     <GestureDetector gesture={panGesture}>
-      <Canvas style={[styles.container, { width: size, height: size }]}>
+      <Canvas
+        className="overflow-hidden rounded-lg border-2 border-gray-200 bg-white"
+        style={{ width: size, height: size }}
+      >
         {/* Render completed paths */}
         {paths.map((path, index) => {
           const skiaPath = createSkiaPath(path.points);
@@ -296,28 +312,15 @@ function SkiaDrawingCanvas({
           pathPaint.setStrokeJoin(1);
           return <SkiaPath key={index} path={skiaPath} paint={pathPaint} />;
         })}
-        
+
         {/* Render current path */}
         {currentPathRef.current.length > 0 && (
-          <SkiaPath path={createSkiaPath(currentPathRef.current)} paint={paint} />
+          <SkiaPath
+            path={createSkiaPath(currentPathRef.current)}
+            paint={paint}
+          />
         )}
       </Canvas>
     </GestureDetector>
   );
-}
-
-const styles = StyleSheet.create({
-  container: {
-    overflow: 'hidden',
-    borderRadius: 8,
-    backgroundColor: '#ffffff',
-    borderWidth: 2,
-    borderColor: '#e5e7eb',
-  },
-});
-
-// Ref type for external access
-export interface DrawingCanvasRef {
-  clear: () => void;
-  getPaths: () => DrawingPath[];
 }

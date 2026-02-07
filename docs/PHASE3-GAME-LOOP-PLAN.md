@@ -1,6 +1,7 @@
 # Phase 3: Game Loop & Cell Logic Implementation Plan
 
 ## Overview
+
 This Phase focuses on implementing the core game state management, cell data structures, 3x3 subgrid rendering, game loop mechanics (lives, mistakes, timer), and persistence using MMKV and Zustand.
 
 ---
@@ -8,31 +9,33 @@ This Phase focuses on implementing the core game state management, cell data str
 ## Step 1: State Management Architecture
 
 ### 1.1 Setup Zustand Store
+
 **File:** `src/store/gameStore.ts`
 
 **Step 1.1.1: Define Core Types**
+
 ```typescript
 export type InputMode = 'SOLVE' | 'NOTE';
 
 export interface Cell {
-  value: number | null;      // Solution digit (1-9) in Solve Mode
-  notes: number[];           // Candidates (1-9 array) in Note Mode
-  isGiven: boolean;          // Original puzzle cell (cannot edit)
-  isError: boolean;          // Visual error state
-  isSelected: boolean;       // Visual selection state
+  value: number | null; // Solution digit (1-9) in Solve Mode
+  notes: number[]; // Candidates (1-9 array) in Note Mode
+  isGiven: boolean; // Original puzzle cell (cannot edit)
+  isError: boolean; // Visual error state
+  isSelected: boolean; // Visual selection state
 }
 
-export type SudokuGrid = Cell[][];  // 9x9 grid
+export type SudokuGrid = Cell[][]; // 9x9 grid
 
 export interface GameState {
   // Puzzle data
-  puzzle: number[][];        // Initial puzzle (0 = empty)
-  solution: number[][];      // Pre-calculated solution
-  grid: SudokuGrid;          // Current state
+  puzzle: number[][]; // Initial puzzle (0 = empty)
+  solution: number[][]; // Pre-calculated solution
+  grid: SudokuGrid; // Current state
 
   // Game progress
-  lives: number;             // 0-3 hearts
-  mistakes: number;          // Total mistakes count
+  lives: number; // 0-3 hearts
+  mistakes: number; // Total mistakes count
   isGameOver: boolean;
   isCompleted: boolean;
 
@@ -46,7 +49,7 @@ export interface GameState {
 
   // Timer
   startTime: number | null;
-  elapsedTime: number;       // In seconds
+  elapsedTime: number; // In seconds
   isPaused: boolean;
 
   // Metadata
@@ -57,9 +60,11 @@ export interface GameState {
 ```
 
 ### 1.2 Create Zustand Store
+
 **File:** `src/store/gameStore.ts` (continued)
 
 **Step 1.2.1: Initial State**
+
 ```typescript
 const initialState: GameState = {
   puzzle: createEmptyPuzzle(),
@@ -85,11 +90,10 @@ const initialState: GameState = {
 ### 1.3 Implement Store Actions
 
 **Step 1.3.1: Game Initialization Actions**
+
 ```typescript
 // Start new game
-const startNewGame = (
-  difficulty: 'easy' | 'medium' | 'hard' | 'expert'
-) => {
+const startNewGame = (difficulty: 'easy' | 'medium' | 'hard' | 'expert') => {
   // 1. Generate puzzle
   const { puzzle, solution } = generatePuzzle(difficulty);
 
@@ -116,6 +120,7 @@ const resumeGame = (savedState: Partial<GameState>) => {
 ```
 
 **Step 1.3.2: Cell Selection Actions**
+
 ```typescript
 // Select a cell
 const selectCell = (row: number, col: number) => {
@@ -124,7 +129,8 @@ const selectCell = (row: number, col: number) => {
 
     // Deselect previous
     if (state.selectedCell) {
-      newGrid[state.selectedCell.row][state.selectedCell.col].isSelected = false;
+      newGrid[state.selectedCell.row][state.selectedCell.col].isSelected =
+        false;
     }
 
     // Select new
@@ -149,6 +155,7 @@ const deselectCell = () => {
 ```
 
 **Step 1.3.3: Input Mode Actions**
+
 ```typescript
 // Switch input mode
 const setInputMode = (mode: InputMode) => {
@@ -157,6 +164,7 @@ const setInputMode = (mode: InputMode) => {
 ```
 
 **Step 1.3.4: Solve Mode Action (Validated Input)**
+
 ```typescript
 // Place digit in Solve Mode
 const placeDigit = (row: number, col: number, digit: number) => {
@@ -202,6 +210,7 @@ const placeDigit = (row: number, col: number, digit: number) => {
 ```
 
 **Step 1.3.5: Note Mode Action (Unvalidated Input)**
+
 ```typescript
 // Toggle candidate in Note Mode
 const toggleCandidate = (row: number, col: number, digit: number) => {
@@ -218,8 +227,8 @@ const toggleCandidate = (row: number, col: number, digit: number) => {
     if (index >= 0) {
       notes.splice(index, 1); // Remove if present
     } else {
-      notes.push(digit);      // Add if not present
-      notes.sort();           // Keep sorted
+      notes.push(digit); // Add if not present
+      notes.sort(); // Keep sorted
     }
 
     return { grid: newGrid };
@@ -252,6 +261,7 @@ const clearCandidates = (row: number, col: number) => {
 ```
 
 **Step 1.3.6: Eraser Action**
+
 ```typescript
 // Clear cell (both solve value and notes)
 const clearCell = (row: number, col: number) => {
@@ -269,6 +279,7 @@ const clearCell = (row: number, col: number) => {
 ```
 
 **Step 1.3.7: Undo/Redo Actions**
+
 ```typescript
 // Save state for undo
 const saveUndoPoint = () => {
@@ -312,6 +323,7 @@ const redo = () => {
 ```
 
 **Step 1.3.8: Timer Actions**
+
 ```typescript
 // Start/pause timer
 const togglePause = () => {
@@ -333,6 +345,7 @@ const updateTimer = () => {
 ```
 
 ### 1.4 Combine Store
+
 **File:** `src/store/gameStore.ts` (final)
 
 ```typescript
@@ -361,9 +374,11 @@ export const useGameStore = create<GameState & Actions>((set, get) => ({
 ## Step 2: Persistence with MMKV
 
 ### 2.1 Setup MMKV Storage
+
 **File:** `src/storage/gameStorage.ts`
 
 **Step 2.1.1: Initialize MMKV**
+
 ```typescript
 import { MMKV } from 'react-native-mmkv';
 
@@ -374,6 +389,7 @@ const gameStorage = new MMKV({
 ```
 
 **Step 2.1.2: Save Game State**
+
 ```typescript
 export const saveGameState = (state: GameState) => {
   try {
@@ -386,6 +402,7 @@ export const saveGameState = (state: GameState) => {
 ```
 
 **Step 2.1.3: Load Game State**
+
 ```typescript
 export const loadGameState = (): GameState | null => {
   try {
@@ -402,6 +419,7 @@ export const loadGameState = (): GameState | null => {
 ```
 
 **Step 2.1.4: Check for Saved Game**
+
 ```typescript
 export const hasSavedGame = (): boolean => {
   return gameStorage.contains('currentGame');
@@ -409,6 +427,7 @@ export const hasSavedGame = (): boolean => {
 ```
 
 **Step 2.1.5: Clear Saved Game**
+
 ```typescript
 export const clearSavedGame = () => {
   gameStorage.delete('currentGame');
@@ -416,6 +435,7 @@ export const clearSavedGame = () => {
 ```
 
 ### 2.2 Auto-Save Integration
+
 **File:** `src/store/gameStore.ts` (add to actions)
 
 ```typescript
@@ -437,9 +457,11 @@ const placeDigit = (row: number, col: number, digit: number) => {
 ## Step 3: Utility Functions
 
 ### 3.1 Grid Utilities
+
 **File:** `src/utils/gridUtils.ts`
 
 **Step 3.1.1: Create Empty Grid**
+
 ```typescript
 export const createEmptyGrid = (): Cell[][] => {
   const grid: Cell[][] = [];
@@ -460,6 +482,7 @@ export const createEmptyGrid = (): Cell[][] => {
 ```
 
 **Step 3.1.2: Initialize Grid from Puzzle**
+
 ```typescript
 export const initializeGrid = (puzzle: number[][]): Cell[][] => {
   const grid = createEmptyGrid();
@@ -478,13 +501,15 @@ export const initializeGrid = (puzzle: number[][]): Cell[][] => {
 ```
 
 **Step 3.1.3: Clone Grid**
+
 ```typescript
 export const cloneGrid = (grid: Cell[][]): Cell[][] => {
-  return grid.map(row => row.map(cell => ({ ...cell })));
+  return grid.map((row) => row.map((cell) => ({ ...cell })));
 };
 ```
 
 **Step 3.1.4: Clear Notes from Peers**
+
 ```typescript
 export const clearNotesFromPeers = (
   grid: Cell[][],
@@ -519,6 +544,7 @@ export const clearNotesFromPeers = (
 ```
 
 **Step 3.1.5: Check Completion**
+
 ```typescript
 export const checkCompletion = (
   grid: Cell[][],
@@ -536,9 +562,11 @@ export const checkCompletion = (
 ```
 
 ### 3.2 Note Management
+
 **File:** `src/utils/noteUtils.ts`
 
 **Step 3.2.1: Auto-Generate Notes**
+
 ```typescript
 export const autoGenerateNotes = (
   grid: Cell[][][],
@@ -576,9 +604,11 @@ export const autoGenerateNotes = (
 ## Step 4: Cell Rendering Component
 
 ### 4.1 Create Cell Component
+
 **File:** `src/ui/components/Cell.tsx`
 
 **Step 4.1.1: Component Structure**
+
 ```typescript
 import React from 'react';
 import { useGameStore } from '../../store/gameStore';
@@ -609,9 +639,11 @@ export const Cell: React.FC<CellProps> = ({ row, col, width, height }) => {
 ```
 
 ### 4.2 Cell Background Rendering
+
 **File:** `src/ui/components/CellBackground.tsx`
 
 **Step 4.2.1: Background Colors**
+
 ```typescript
 const CellBackground: React.FC<CellBackgroundProps> = ({ cell, width, height }) => {
   const fillColor = React.useMemo(() => {
@@ -627,9 +659,11 @@ const CellBackground: React.FC<CellBackgroundProps> = ({ cell, width, height }) 
 ```
 
 ### 4.3 Solve Digit Rendering
+
 **File:** `src/ui/components/SolveDigit.tsx`
 
 **Step 4.3.1: Large Digit Display**
+
 ```typescript
 const SolveDigit: React.FC<SolveDigitProps> = ({ digit, width, height, isError }) => {
   if (!digit) return null;
@@ -655,9 +689,11 @@ const SolveDigit: React.FC<SolveDigitProps> = ({ digit, width, height, isError }
 ## Step 5: 3x3 Notes Subgrid Rendering
 
 ### 5.1 Create Notes Grid Component
+
 **File:** `src/ui/components/NotesGrid.tsx`
 
 **Step 5.1.1: Notes Subgrid Layout**
+
 ```typescript
 const NotesGrid: React.FC<NotesGridProps> = ({ notes, width, height }) => {
   if (notes.length === 0) return null;
@@ -692,6 +728,7 @@ const NotesGrid: React.FC<NotesGridProps> = ({ notes, width, height }) => {
 ```
 
 **Step 5.1.2: Cell Content Orchestrator**
+
 ```typescript
 const CellContent: React.FC<CellContentProps> = ({ cell, width, height }) => {
   // Render Solve Mode digit if present
@@ -716,9 +753,11 @@ const CellContent: React.FC<CellContentProps> = ({ cell, width, height }) => {
 ## Step 6: Game Loop Implementation
 
 ### 6.1 Timer Component
+
 **File:** `src/ui/components/Timer.tsx`
 
 **Step 6.1.1: Time Display**
+
 ```typescript
 export const Timer: React.FC = () => {
   const { elapsedTime, isPaused, togglePause } = useGameStore();
@@ -750,9 +789,11 @@ export const Timer: React.FC = () => {
 ```
 
 ### 6.2 Lives Display Component
+
 **File:** `src/ui/components/LivesDisplay.tsx`
 
 **Step 6.2.1: Hearts Display**
+
 ```typescript
 export const LivesDisplay: React.FC = () => {
   const { lives } = useGameStore();
@@ -776,9 +817,11 @@ export const LivesDisplay: React.FC = () => {
 ```
 
 ### 6.3 Game Over Screen
+
 **File:** `src/ui/components/GameOverScreen.tsx`
 
 **Step 6.3.1: Game Over Logic**
+
 ```typescript
 export const GameOverScreen: React.FC = () => {
   const { isGameOver, isCompleted, mistakes } = useGameStore();
@@ -811,9 +854,11 @@ export const GameOverScreen: React.FC = () => {
 ## Step 7: Testing Strategy
 
 ### 7.1 Unit Tests
+
 **File:** `tests/store/gameStore.test.ts`
 
 Test Cases:
+
 - [ ] `startNewGame()` creates valid game state
 - [ ] `selectCell()` updates selection correctly
 - [ ] `placeDigit()` validates correctly in Solve Mode
@@ -823,9 +868,11 @@ Test Cases:
 - [ ] `redo()` restores undone state
 
 ### 7.2 Integration Tests
+
 **File:** `tests/store/integration.test.ts`
 
 Test Cases:
+
 - [ ] Full game loop: start → play → win
 - [ ] Loss scenario: 3 mistakes → game over
 - [ ] Persistence: save → reload → resume
@@ -833,9 +880,11 @@ Test Cases:
 - [ ] Timer works correctly
 
 ### 7.3 Rendering Tests
+
 **File:** `tests/ui/cell.test.ts`
 
 Test Cases:
+
 - [ ] Given cells display correctly
 - [ ] Solve digits render at correct size
 - [ ] Notes render in 3x3 grid
@@ -847,12 +896,14 @@ Test Cases:
 ## Step 8: Verification Checklist
 
 ### 8.1 State Management
+
 - [ ] Zustand store compiles without errors
 - [ ] All actions mutate state correctly
 - [ ] State persists with MMKV
 - [ ] Undo/redo maintains correct stack
 
 ### 8.2 Cell Logic
+
 - [ ] Cell data structure matches PRD
 - [ ] Solve Mode validation works
 - [ ] Note Mode toggling works
@@ -860,12 +911,14 @@ Test Cases:
 - [ ] Eraser clears both value and notes
 
 ### 8.3 Rendering
+
 - [ ] 3x3 notes subgrid has correct layout
 - [ ] Digit sizes are correct (60% vs 20%)
 - [ ] Colors match specification
 - [ ] Selection feedback is visible
 
 ### 8.4 Game Loop
+
 - [ ] Lives decrement correctly
 - [ ] Timer updates every second
 - [ ] Game Over triggers at 0 lives
@@ -905,6 +958,7 @@ Test Cases:
 ---
 
 ## Estimated Timeline
+
 - Step 1 (State Management): 10 hours
 - Step 2 (Persistence): 4 hours
 - Step 3 (Utilities): 4 hours
@@ -919,7 +973,9 @@ Test Cases:
 ---
 
 ## Next Phase
+
 After completing Phase 3:
+
 1. Game logic is fully interactive
 2. Cell rendering works for both modes
 3. Ready for Phase 4: Polish (Visual Effects, Animations, Shaders)

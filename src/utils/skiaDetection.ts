@@ -32,7 +32,7 @@ export function isSkiaAvailable(): boolean {
   try {
     // Try to import Skia and check if the native module is actually loaded
     const SkiaModule = require('@shopify/react-native-skia');
-    
+
     // The Skia object must exist AND have the Make functions available
     // These will be undefined if native module not loaded
     if (SkiaModule?.Skia?.Path?.Make) {

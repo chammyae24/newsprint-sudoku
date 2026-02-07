@@ -9,7 +9,10 @@ export class SudokuGenerator {
   /**
    * Generates a new Sudoku puzzle with the specified difficulty.
    */
-  public static generate(difficulty: Difficulty): { grid: SudokuCell[][], solution: number[][] } {
+  public static generate(difficulty: Difficulty): {
+    grid: SudokuCell[][];
+    solution: number[][];
+  } {
     // 1. Create an empty grid
     const solutionGrid = this.createEmptyGrid();
 
@@ -18,7 +21,7 @@ export class SudokuGenerator {
 
     // 3. Solve the rest (backtracking) to get a full valid grid
     if (!this.solve(solutionGrid)) {
-      throw new Error("Failed to generate a valid Sudoku grid");
+      throw new Error('Failed to generate a valid Sudoku grid');
     }
 
     // Clone the solution for the final puzzle state
@@ -27,7 +30,7 @@ export class SudokuGenerator {
         value: val,
         solutionValue: val,
         isGiven: true,
-        notes: []
+        notes: [],
       }))
     );
 
@@ -36,12 +39,14 @@ export class SudokuGenerator {
 
     return {
       grid: puzzleGrid,
-      solution: solutionGrid
+      solution: solutionGrid,
     };
   }
 
   private static createEmptyGrid(): number[][] {
-    return Array.from({ length: this.GRID_SIZE }, () => Array(this.GRID_SIZE).fill(0));
+    return Array.from({ length: this.GRID_SIZE }, () =>
+      Array(this.GRID_SIZE).fill(0)
+    );
   }
 
   private static fillDiagonalBoxes(grid: number[][]): void {
@@ -50,7 +55,11 @@ export class SudokuGenerator {
     }
   }
 
-  private static fillBox(grid: number[][], rowStart: number, colStart: number): void {
+  private static fillBox(
+    grid: number[][],
+    rowStart: number,
+    colStart: number
+  ): void {
     let num: number;
     for (let i = 0; i < this.BOX_SIZE; i++) {
       for (let j = 0; j < this.BOX_SIZE; j++) {
@@ -85,35 +94,38 @@ export class SudokuGenerator {
     return true;
   }
 
-  private static removeNumbers(grid: SudokuCell[][], difficulty: Difficulty): void {
+  private static removeNumbers(
+    grid: SudokuCell[][],
+    difficulty: Difficulty
+  ): void {
     const cellsToRemove = this.getCellsToRemove(difficulty);
     let count = 0;
-    
-    const positions: {r: number, c: number}[] = [];
+
+    const positions: { r: number; c: number }[] = [];
     for (let r = 0; r < this.GRID_SIZE; r++) {
       for (let c = 0; c < this.GRID_SIZE; c++) {
-        positions.push({r, c});
+        positions.push({ r, c });
       }
     }
     shuffleArray(positions);
 
     for (const pos of positions) {
       if (count >= cellsToRemove) break;
-      
-      const {r, c} = pos;
-      
+
+      const { r, c } = pos;
+
       if (grid[r][c].value !== null) {
         const backupValue = grid[r][c].value;
         grid[r][c].value = null;
         grid[r][c].isGiven = false;
-        
+
         const solutions = SudokuSolver.countSolutions(grid);
-        
-        if (solutions !== 1) { 
-          grid[r][c].value = backupValue; 
-          grid[r][c].isGiven = true; 
-        } else { 
-          count++; 
+
+        if (solutions !== 1) {
+          grid[r][c].value = backupValue;
+          grid[r][c].isGiven = true;
+        } else {
+          count++;
         }
       }
     }
@@ -121,12 +133,18 @@ export class SudokuGenerator {
 
   private static getCellsToRemove(difficulty: Difficulty): number {
     switch (difficulty) {
-      case Difficulty.EASY: return 30;
-      case Difficulty.MEDIUM: return 40;
-      case Difficulty.HARD: return 50;
-      case Difficulty.EXPERT: return 56;
-      case Difficulty.MASTER: return 64;
-      default: return 30;
+      case Difficulty.EASY:
+        return 30;
+      case Difficulty.MEDIUM:
+        return 40;
+      case Difficulty.HARD:
+        return 50;
+      case Difficulty.EXPERT:
+        return 56;
+      case Difficulty.MASTER:
+        return 64;
+      default:
+        return 30;
     }
   }
 }

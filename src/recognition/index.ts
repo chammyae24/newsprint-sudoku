@@ -3,11 +3,12 @@
  */
 
 export {
-    getRecognizerDisplayName, getRecognizerType, isRecognizerAvailable, recognizeDigit, type RecognitionResult,
-    type RecognizerType
+  getRecognizerDisplayName,
+  getRecognizerType,
+  isRecognizerAvailable,
+  recognizeDigit,
+  type RecognitionResult,
+  type RecognizerType,
 } from './DigitRecognizer';
 
-export {
-    isJSRecognizerAvailable, recognizeDigitJS
-} from './JSDigitRecognizer';
-
+export { isJSRecognizerAvailable, recognizeDigitJS } from './JSDigitRecognizer';

@@ -1,69 +1,48 @@
 import * as Haptics from 'expo-haptics';
 import React from 'react';
-import { Pressable, StyleSheet, Text } from 'react-native';
+import { Pressable, Text } from 'react-native';
 import { useGameStore } from '../../store/GameStore';
+import { cn } from '../../utils/cn';
 
 /**
  * Eraser tool to clear the selected cell's value and notes.
  */
 export function Eraser() {
-  const selectedCell = useGameStore(state => state.selectedCell);
-  const grid = useGameStore(state => state.grid);
-  const clearCell = useGameStore(state => state.clearCell);
-  
+  const selectedCell = useGameStore((state) => state.selectedCell);
+  const grid = useGameStore((state) => state.grid);
+  const clearCell = useGameStore((state) => state.clearCell);
+
   const canErase = React.useMemo(() => {
     if (!selectedCell) return false;
     const cell = grid[selectedCell.row][selectedCell.col];
     return !cell.isGiven && (cell.value !== null || cell.notes.length > 0);
   }, [selectedCell, grid]);
-  
+
   const handlePress = async () => {
     if (!canErase) return;
-    
+
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     clearCell();
   };
-  
+
   return (
     <Pressable
-      style={[
-        styles.button,
-        !canErase && styles.disabled,
-      ]}
+      className={cn(
+        'flex-row items-center gap-1.5 rounded-full px-4 py-2.5',
+        canErase ? 'bg-red-50' : 'bg-gray-100 opacity-50'
+      )}
       onPress={handlePress}
       disabled={!canErase}
     >
-      <Text style={styles.icon}>🗑️</Text>
-      <Text style={[styles.text, !canErase && styles.disabledText]}>
+      <Text className="text-base">🗑️</Text>
+      <Text
+        className={cn(
+          'text-sm font-medium',
+          canErase ? 'text-red-600' : 'text-gray-400'
+        )}
+      >
         Erase
       </Text>
     </Pressable>
   );
 }
-
-const styles = StyleSheet.create({
-  button: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 20,
-    backgroundColor: '#fef2f2',
-    gap: 6,
-  },
-  disabled: {
-    backgroundColor: '#f3f4f6',
-    opacity: 0.5,
-  },
-  icon: {
-    fontSize: 16,
-  },
-  text: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#dc2626',
-  },
-  disabledText: {
-    color: '#9ca3af',
-  },
-});

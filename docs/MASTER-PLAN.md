@@ -3,6 +3,7 @@
 ## Project Overview
 
 **Newsprint Sudoku** is a premium iPad-first puzzle game featuring:
+
 - Hyper-realistic "Sunday Newspaper" aesthetic
 - Apple Pencil handwriting recognition via Vision Framework
 - 13-technique Logic Engine for smart hints
@@ -10,6 +11,7 @@
 - 3-lives game system
 
 **Tech Stack:**
+
 - React Native (Expo Managed)
 - TypeScript
 - @shopify/react-native-skia
@@ -23,13 +25,13 @@
 
 The project is divided into **4 sequential phases**, each building upon the previous:
 
-| Phase | Focus | Duration | Status |
-|-------|-------|----------|--------|
-| **Phase 1** | Logic Core (Pure TypeScript) | 34 hours (4-5 days) | ⏳ Pending |
-| **Phase 2** | Native Bridge & Input | 50 hours (6-7 days) | ⏳ Pending |
-| **Phase 3** | Game Loop & Cell Logic | 44 hours (5-6 days) | ⏳ Pending |
-| **Phase 4** | Polish (Visuals, Animations) | 54 hours (6-7 days) | ⏳ Pending |
-| **Total** | | **182 hours (22-25 days)** | |
+| Phase       | Focus                        | Duration                   | Status     |
+| ----------- | ---------------------------- | -------------------------- | ---------- |
+| **Phase 1** | Logic Core (Pure TypeScript) | 34 hours (4-5 days)        | ⏳ Pending |
+| **Phase 2** | Native Bridge & Input        | 50 hours (6-7 days)        | ⏳ Pending |
+| **Phase 3** | Game Loop & Cell Logic       | 44 hours (5-6 days)        | ⏳ Pending |
+| **Phase 4** | Polish (Visuals, Animations) | 54 hours (6-7 days)        | ⏳ Pending |
+| **Total**   |                              | **182 hours (22-25 days)** |            |
 
 ---
 
@@ -38,6 +40,7 @@ The project is divided into **4 sequential phases**, each building upon the prev
 **Goal:** Build the pure TypeScript game logic, puzzle generator, and logic solver.
 
 ### Key Components:
+
 1. **SudokuGenerator.ts** - Puzzle generation algorithm
    - Backtracking for full grid
    - Symmetric digging
@@ -56,12 +59,14 @@ The project is divided into **4 sequential phases**, each building upon the prev
    - Technique types, hint structure
 
 ### Deliverables:
+
 - ✓ Fully functional puzzle generator
 - ✓ Logic solver with 13 techniques
 - ✓ Comprehensive test suite (100+ tests)
 - ✓ Architecture documentation
 
 ### Success Criteria:
+
 - Generate valid puzzles <100ms
 - Solve puzzles <500ms
 - 100% technique detection accuracy
@@ -74,6 +79,7 @@ The project is divided into **4 sequential phases**, each building upon the prev
 **Goal:** Setup iOS native modules for handwriting recognition and create the Skia drawing canvas.
 
 ### Key Components:
+
 1. **Native iOS Module**
    - Swift VisionOCR module
    - Apple Vision Framework integration
@@ -103,6 +109,7 @@ The project is divided into **4 sequential phases**, each building upon the prev
    - Mode switching logic
 
 ### Deliverables:
+
 - ✓ Vision OCR native module
 - ✓ Skia drawing canvas
 - ✓ Handwriting recognition (90%+ accuracy)
@@ -110,6 +117,7 @@ The project is divided into **4 sequential phases**, each building upon the prev
 - ✓ Virtual keypad
 
 ### Success Criteria:
+
 - OCR recognition accuracy >90%
 - Recognition response <500ms
 - Drawing maintains 60fps
@@ -122,19 +130,21 @@ The project is divided into **4 sequential phases**, each building upon the prev
 **Goal:** Implement the game state management, persistence, 3x3 notes rendering, and core game loop.
 
 ### Key Components:
+
 1. **Zustand Store** (`gameStore.ts`)
    - Complete game state
    - 15+ actions (placeDigit, toggleCandidate, undo, etc.)
    - Game initialization and resume
 
 2. **Cell Data Structure**
+
    ```typescript
    interface Cell {
-     value: number | null;      // Solve digit
-     notes: number[];           // Note candidates
-     isGiven: boolean;          // Locked cell
-     isError: boolean;          // Visual error
-     isSelected: boolean;       // Selection highlight
+     value: number | null; // Solve digit
+     notes: number[]; // Note candidates
+     isGiven: boolean; // Locked cell
+     isError: boolean; // Visual error
+     isSelected: boolean; // Selection highlight
    }
    ```
 
@@ -162,6 +172,7 @@ The project is divided into **4 sequential phases**, each building upon the prev
    - Auto-Note (generate candidates)
 
 ### Deliverables:
+
 - ✓ Zustand game store
 - ✓ MMKV persistence
 - ✓ Cell rendering for both modes
@@ -169,6 +180,7 @@ The project is divided into **4 sequential phases**, each building upon the prev
 - ✓ Undo/Redo system
 
 ### Success Criteria:
+
 - State persists correctly
 - Lives decrement accurately
 - Timer updates smoothly
@@ -181,6 +193,7 @@ The project is divided into **4 sequential phases**, each building upon the prev
 **Goal:** Add the visual polish that makes Newsprint Sudoku stand out.
 
 ### Key Components:
+
 1. **Skia Shaders**
    - Paper texture (noise + vignette)
    - Ink bleed effect
@@ -223,6 +236,7 @@ The project is divided into **4 sequential phases**, each building upon the prev
    - 60fps target
 
 ### Deliverables:
+
 - ✓ Paper texture shader
 - ✓ 4 animation types
 - ✓ Responsive layouts
@@ -231,6 +245,7 @@ The project is divided into **4 sequential phases**, each building upon the prev
 - ✓ Main menu & victory screens
 
 ### Success Criteria:
+
 - Stable 60fps
 - No memory leaks
 - Smooth transitions
@@ -241,29 +256,34 @@ The project is divided into **4 sequential phases**, each building upon the prev
 ## Implementation Order
 
 ### Week 1: Phase 1 (Logic Core)
+
 - Days 1-2: Setup, types, generator
 - Days 3-4: Logic solver with 13 techniques
 - Day 5: Testing and verification
 
 ### Week 2: Phase 2 (Native Bridge)
+
 - Days 1-2: Expo config, native module
 - Days 3-4: Skia drawing canvas
 - Days 5-6: Recognition integration and testing
 - Day 7: Buffer and verification
 
 ### Week 3: Phase 3 (Game Loop)
+
 - Days 1-2: Zustand store and actions
 - Days 3-4: Persistence and cell rendering
 - Days 5-6: Game loop and tools
 - Day 7: Testing and verification
 
 ### Week 4: Phase 4 (Polish)
+
 - Days 1-2: Shaders and effects
 - Days 3-4: Animations and feedback
 - Days 5-6: Responsive layout and UI
 - Day 7: Performance optimization
 
 ### Week 5: Final Polish & Launch
+
 - Days 1-2: End-to-end testing
 - Days 3-4: Bug fixes and refinements
 - Days 5: App Store preparation
@@ -275,6 +295,7 @@ The project is divided into **4 sequential phases**, each building upon the prev
 ## Dependencies & Prerequisites
 
 ### Development Environment
+
 - [ ] Node.js 18+
 - [ ] Bun or NPM
 - [ ] Expo CLI
@@ -283,6 +304,7 @@ The project is divided into **4 sequential phases**, each building upon the prev
 - [ ] Apple Pencil (for testing)
 
 ### Required Packages
+
 ```json
 {
   "core": {
@@ -310,6 +332,7 @@ The project is divided into **4 sequential phases**, each building upon the prev
 ```
 
 ### External Services
+
 - **Supabase** - Auth, leaderboards, daily puzzles (optional, Phase 1 can use local)
 
 ---
@@ -317,18 +340,20 @@ The project is divided into **4 sequential phases**, each building upon the prev
 ## Testing Strategy
 
 ### Test Coverage
-| Component | Test Type | Coverage Goal | Status |
-|-----------|-----------|---------------|--------|
-| Logic Core | Unit Tests | 90% | ⏳ Pending |
-| Generatior | Integration Tests | 85% | ⏳ Pending |
-| Native Bridge | Unit Tests | 70% | ⏳ Pending |
-| Drawing | Manual Testing | N/A | ⏳ Pending |
-| Game Store | Unit Tests | 85% | ⏳ Pending |
-| Persistence | Integration Tests | 90% | ⏳ Pending |
-| Animations | Visual Tests | N/A | ⏳ Pending |
-| Overall | | ≥80% | ⏳ Pending |
+
+| Component     | Test Type         | Coverage Goal | Status     |
+| ------------- | ----------------- | ------------- | ---------- |
+| Logic Core    | Unit Tests        | 90%           | ⏳ Pending |
+| Generatior    | Integration Tests | 85%           | ⏳ Pending |
+| Native Bridge | Unit Tests        | 70%           | ⏳ Pending |
+| Drawing       | Manual Testing    | N/A           | ⏳ Pending |
+| Game Store    | Unit Tests        | 85%           | ⏳ Pending |
+| Persistence   | Integration Tests | 90%           | ⏳ Pending |
+| Animations    | Visual Tests      | N/A           | ⏳ Pending |
+| Overall       |                   | ≥80%          | ⏳ Pending |
 
 ### Key Test Cases
+
 - ✓ 100 random puzzles have unique solutions
 - ✓ XY-Wing puzzle requires XY-Wing technique
 - ✓ OCR recognizes digits 1-9 with >90% accuracy
@@ -345,6 +370,7 @@ The project is divided into **4 sequential phases**, each building upon the prev
 ## Milestones & Sign-Off
 
 ### Phase 1 Sign-Off Criteria
+
 - [ ] Generator creates valid puzzles
 - [ ] Solver implements all 13 techniques
 - [ ] Difficulty grading is accurate
@@ -352,6 +378,7 @@ The project is divided into **4 sequential phases**, each building upon the prev
 - [ ] Performance meets targets
 
 ### Phase 2 Sign-Off Criteria
+
 - [ ] Native module compiles
 - [ ] OCR recognizes digits correctly
 - [ ] Drawing is smooth (60fps)
@@ -359,6 +386,7 @@ The project is divided into **4 sequential phases**, each building upon the prev
 - [ ] Both input modes work
 
 ### Phase 3 Sign-Off Criteria
+
 - [ ] Game state persists
 - [ ] Lives system works
 - [ ] Timer updates correctly
@@ -367,6 +395,7 @@ The project is divided into **4 sequential phases**, each building upon the prev
 - [ ] Undo/Redo works
 
 ### Phase 4 Sign-Off Criteria
+
 - [ ] Paper texture renders
 - [ ] All animations are smooth
 - [ ] Both layouts work (portrait/landscape)
@@ -378,6 +407,7 @@ The project is divided into **4 sequential phases**, each building upon the prev
 ## Risk Mitigation
 
 ### High-Risk Areas
+
 1. **Vision OCR Accuracy**
    - **Risk**: Low recognition accuracy
    - **Mitigation**: Implement Ink Chooser fallback, extensive testing with different handwriting styles
@@ -395,6 +425,7 @@ The project is divided into **4 sequential phases**, each building upon the prev
    - **Mitigation**: Use Expo Config Plugins, version pinning, CI/CD testing
 
 ### Contingency Plans
+
 - If Vision OCR doesn't meet accuracy: Add on-screen number picker
 - If Skia performance degrades: Reduce path complexity, use bitmap caching
 - If Supabase sync fails: Use full offline-first approach
@@ -404,6 +435,7 @@ The project is divided into **4 sequential phases**, each building upon the prev
 ## Success Metrics
 
 ### Technical Metrics
+
 - [ ] 60fps rendering (no drops)
 - [ ] <500ms OCR recognition
 - [ ] <100ms puzzle generation
@@ -413,17 +445,19 @@ The project is divided into **4 sequential phases**, each building upon the prev
 - [ ] <5mb app size (excluding assets)
 
 ### User Experience Metrics (Post-Launch)
-- [ ] >3 minutes average session
+
+- [ ] > 3 minutes average session
 - [ ] <2 second app startup
-- [ ] >4/5 star rating
+- [ ] > 4/5 star rating
 - [ ] <10% crash rate
-- [ ] >70% puzzle completion rate
+- [ ] > 70% puzzle completion rate
 
 ---
 
 ## Resources & References
 
 ### Documentation
+
 - Phase 1 Details: `docs/PHASE1-LOGIC-CORE-PLAN.md`
 - Phase 2 Details: `docs/PHASE2-NATIVE-BRIDGE-PLAN.md`
 - Phase 3 Details: `docs/PHASE3-GAME-LOOP-PLAN.md`
@@ -431,6 +465,7 @@ The project is divided into **4 sequential phases**, each building upon the prev
 - Product Requirements: `docs/PRD.md`
 
 ### External References
+
 - React Native: https://reactnative.dev/
 - Expo: https://docs.expo.dev/
 - Skia: https://shopify.github.io/react-native-skia/
@@ -442,6 +477,7 @@ The project is divided into **4 sequential phases**, each building upon the prev
 ## Next Steps
 
 1. **Setup Development Environment**
+
    ```bash
    # Verify tools
    node --version  # Should be 18+
@@ -449,6 +485,7 @@ The project is divided into **4 sequential phases**, each building upon the prev
    ```
 
 2. **Install Dependencies**
+
    ```bash
    npm install
    # Or
@@ -472,6 +509,7 @@ The project is divided into **4 sequential phases**, each building upon the prev
 ## Contact & Support
 
 For questions or blockers during implementation:
+
 1. Review detailed phase plans
 2. Check PRD for specifications
 3. Consult external documentation links

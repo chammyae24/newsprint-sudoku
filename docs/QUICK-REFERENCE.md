@@ -3,39 +3,47 @@
 ## Phase Summaries
 
 ### Phase 1: Logic Core (34 hours)
+
 **What:** Pure TypeScript Sudoku generator and solver
 **Key Files:**
+
 - `src/core/generator/SudokuGenerator.ts`
 - `src/core/solver/SudokuSolver.ts`
 - `src/core/types/index.ts`
-**Output:** Valid puzzles with difficulty grades + 13-technique solver
+  **Output:** Valid puzzles with difficulty grades + 13-technique solver
 
 ### Phase 2: Native Bridge & Input (50 hours)
+
 **What:** iOS Vision OCR + Skia drawing canvas
 **Key Files:**
+
 - `ios/VisionOCRModule.swift`
 - `plugins/withVisionOCR.ts`
 - `src/ui/components/DrawingCanvas.tsx`
 - `src/native/VisionOCR.ts`
-**Output:** Handwriting recognition with Ink Chooser UI
+  **Output:** Handwriting recognition with Ink Chooser UI
 
 ### Phase 3: Game Loop & Cell Logic (44 hours)
+
 **What:** Zustand store, MMKV persistence, cell rendering
 **Key Files:**
+
 - `src/store/gameStore.ts`
 - `src/storage/gameStorage.ts`
 - `src/ui/components/Cell.tsx`
 - `src/ui/components/NotesGrid.tsx`
-**Output:** Full game state with undo/redo and save/resume
+  **Output:** Full game state with undo/redo and save/resume
 
 ### Phase 4: Polish (54 hours)
+
 **What:** Visual effects, animations, audio, haptics
 **Key Files:**
+
 - `src/ui/shaders/PaperTexture.ts`
 - `src/ui/animations/*.tsx`
 - `src/ui/layouts/*.tsx`
 - `src/audio/SoundManager.ts`
-**Output:** 60fps gaming experience with immersion
+  **Output:** 60fps gaming experience with immersion
 
 ---
 
@@ -122,27 +130,29 @@ newsprint-sudoku/
 ## Key Data Structures
 
 ### Cell Interface
+
 ```typescript
 interface Cell {
-  value: number | null;      // Solve digit (1-9) or null
-  notes: number[];           // Note candidates [1, 5, 9]
-  isGiven: boolean;          // Original puzzle cell
-  isError: boolean;          // Visual error state
-  isSelected: boolean;       // Cell is selected
+  value: number | null; // Solve digit (1-9) or null
+  notes: number[]; // Note candidates [1, 5, 9]
+  isGiven: boolean; // Original puzzle cell
+  isError: boolean; // Visual error state
+  isSelected: boolean; // Cell is selected
 }
 ```
 
 ### Game Store State
+
 ```typescript
 interface GameState {
-  puzzle: number[][];        // Initial puzzle
-  solution: number[][];      // Pre-calculated solution
-  grid: Cell[][];            // Current state (9x9)
-  lives: number;             // 0-3
-  mistakes: number;          // Total mistakes
+  puzzle: number[][]; // Initial puzzle
+  solution: number[][]; // Pre-calculated solution
+  grid: Cell[][]; // Current state (9x9)
+  lives: number; // 0-3
+  mistakes: number; // Total mistakes
   isGameOver: boolean;
   isCompleted: boolean;
-  selectedCell: { row, col } | null;
+  selectedCell: { row; col } | null;
   inputMode: 'SOLVE' | 'NOTE';
   undoStack: GameState[];
   redoStack: GameState[];
@@ -157,27 +167,28 @@ interface GameState {
 
 ## 13 Logic Techniques (Solver Tiers)
 
-| Tier | Technique | Description |
-|------|-----------|-------------|
-| 1 | Unique Solution | Core validator |
-| 2 | Last Free Cell | Row/col/box with 8 filled |
-| 3 | Hidden Single | Digit fits in only 1 cell of unit |
-| 4 | Cross-Hatching | Visual helper for hidden singles |
-| 5 | Locked (Pointing) | Candidate restricted to row/col in box |
-| 6 | Locked (Claiming) | Candidate restricted to box in row/col |
-| 7 | Naked Pair | 2 cells with same 2 candidates |
-| 8 | Hidden Pair | 2 candidates in only 2 cells |
-| 9 | Naked Triple | 3 cells with 3 candidates combined |
-| 10 | Hidden Triple | 3 candidates in only 3 cells |
-| 11 | Skyscraper | Turbot fish on rows/cols |
-| 12 | XY-Wing | Pivot + 2 wings eliminates common digit |
-| 13 | BUG+1 | Avoid deadly pattern, resolve tri-value |
+| Tier | Technique         | Description                             |
+| ---- | ----------------- | --------------------------------------- |
+| 1    | Unique Solution   | Core validator                          |
+| 2    | Last Free Cell    | Row/col/box with 8 filled               |
+| 3    | Hidden Single     | Digit fits in only 1 cell of unit       |
+| 4    | Cross-Hatching    | Visual helper for hidden singles        |
+| 5    | Locked (Pointing) | Candidate restricted to row/col in box  |
+| 6    | Locked (Claiming) | Candidate restricted to box in row/col  |
+| 7    | Naked Pair        | 2 cells with same 2 candidates          |
+| 8    | Hidden Pair       | 2 candidates in only 2 cells            |
+| 9    | Naked Triple      | 3 cells with 3 candidates combined      |
+| 10   | Hidden Triple     | 3 candidates in only 3 cells            |
+| 11   | Skyscraper        | Turbot fish on rows/cols                |
+| 12   | XY-Wing           | Pivot + 2 wings eliminates common digit |
+| 13   | BUG+1             | Avoid deadly pattern, resolve tri-value |
 
 ---
 
 ## Input Modes
 
 ### Solve Mode (🖊️ Pen)
+
 - Enters **Final Solution** digit
 - Large digit (60% of cell height)
 - **Immediate validation**
@@ -185,6 +196,7 @@ interface GameState {
 - Incorrect: -1 Heart, red shake
 
 ### Note Mode (✏️ Pencil)
+
 - Enters **Candidates** (up to 9)
 - 3x3 subgrid layout
 - Small digits (20% of cell height)
@@ -196,6 +208,7 @@ interface GameState {
 ## Visual Specifications
 
 ### Colors
+
 - Background: `#F3EBDD` (off-white paper)
 - Grid Dark: `#2A2A2A`
 - Grid Light: `#8D8A83`
@@ -204,6 +217,7 @@ interface GameState {
 - Notes: `#666666` (grey pencil)
 
 ### Typography
+
 - Solve Digit: Serif/handwriting, ~60% cell height
 - Note Digit: Sans-serif/pencil stroke, ~20% cell height
 
@@ -211,32 +225,35 @@ interface GameState {
 
 ## Performance Targets
 
-| Metric | Target | Status |
-|--------|--------|--------|
-| Puzzle Generation | <100ms | ⏳ |
-| Puzzle Solving | <500ms | ⏳ |
-| OCR Recognition | <500ms | ⏳ |
-| Rendering | 60fps | ⏳ |
-| App Launch | <2s | ⏳ |
-| Test Coverage | ≥80% | ⏳ |
-| OCR Accuracy | >90% | ⏳ |
+| Metric            | Target | Status |
+| ----------------- | ------ | ------ |
+| Puzzle Generation | <100ms | ⏳     |
+| Puzzle Solving    | <500ms | ⏳     |
+| OCR Recognition   | <500ms | ⏳     |
+| Rendering         | 60fps  | ⏳     |
+| App Launch        | <2s    | ⏳     |
+| Test Coverage     | ≥80%   | ⏳     |
+| OCR Accuracy      | >90%   | ⏳     |
 
 ---
 
 ## Key Components Reference
 
 ### DrawingCanvas
+
 - Library: `@shopify/react-native-skia`
 - Props: `width`, `height`, `onPathComplete`
 - Returns: `SkPath[]`
 
 ### VisionOCR
+
 - Platform: iOS only
 - Framework: Apple Vision (`VNRecognizeTextRequest`)
 - Filter: Digits 1-9 only
 - Returns: `OCRResult[] { text, confidence, boundingBox }`
 
 ### gameStore (Zustand)
+
 - Actions:
   - `startNewGame(difficulty)`
   - `resumeGame(state)`
@@ -252,6 +269,7 @@ interface GameState {
   - `updateTimer()`
 
 ### MMKV Storage
+
 - Key: `'newsprint-sudoku-game'`
 - Methods:
   - `saveGameState(state)`
@@ -264,21 +282,25 @@ interface GameState {
 ## Animation Specs
 
 ### Cell Selection
+
 - Effect: Scale up 5% + fade in selection
 - Duration: 200ms
 - Easing: Spring (damped)
 
 ### Mistake (Error)
+
 - Effect: Horizontal shake (left-right-left-right-center)
 - Duration: 250ms total
 - Distance: ±10px
 
 ### Completion
+
 - Effect: Flash overlay with scale (1 → 1.5 → 1)
 - Duration: 500ms total
 - Content: "🎉 PUZZLE COMPLETE! 🎉"
 
 ### Mode Switch
+
 - Effect: Scale up 10% + color transition
 - Duration: 200ms
 - Active: Dark (#2A2A2A)
@@ -289,21 +311,23 @@ interface GameState {
 ## Audio & Haptics
 
 ### Sound Effects (expo-av)
-| Sound | Duration | Timing |
-|-------|----------|--------|
-| digitPlace | ~100ms | On correct digit entry |
-| error | ~200ms | On incorrect digit |
-| victory | ~2s | On puzzle completion |
-| pageTurn | ~300ms | On page/menu change |
+
+| Sound      | Duration | Timing                 |
+| ---------- | -------- | ---------------------- |
+| digitPlace | ~100ms   | On correct digit entry |
+| error      | ~200ms   | On incorrect digit     |
+| victory    | ~2s      | On puzzle completion   |
+| pageTurn   | ~300ms   | On page/menu change    |
 
 ### Haptic Types (expo-haptics)
-| Action | Type |
-|--------|------|
-| Digit place | `Light` impact |
-| Mode switch | `Medium` impact |
-| Error | `Error` notification |
-| Victory | `Success` notification |
-| Cell selection | `Selection` |
+
+| Action         | Type                   |
+| -------------- | ---------------------- |
+| Digit place    | `Light` impact         |
+| Mode switch    | `Medium` impact        |
+| Error          | `Error` notification   |
+| Victory        | `Success` notification |
+| Cell selection | `Selection`            |
 
 ---
 
@@ -378,6 +402,7 @@ gh pr create --title "Phase 1: Logic Core" --body "..."
 ```
 
 ### Commit Message Format
+
 ```
 feat: new feature
 fix: bug fix
@@ -392,6 +417,7 @@ chore: maintenance
 ## Common Patterns
 
 ### Immutable State Updates
+
 ```typescript
 // Correct
 set((state) => ({
@@ -406,15 +432,20 @@ set((state) => {
 ```
 
 ### Memoized Components
+
 ```typescript
-const Cell = React.memo(({ data }: Props) => {
-  // Component logic
-}, (prev, next) => {
-  return prev.data === next.data;
-});
+const Cell = React.memo(
+  ({ data }: Props) => {
+    // Component logic
+  },
+  (prev, next) => {
+    return prev.data === next.data;
+  }
+);
 ```
 
 ### Use Shared Values (Reanimated)
+
 ```typescript
 const animatedStyle = useAnimatedStyle(() => ({
   transform: [{ scale: scaleValue }],
@@ -427,24 +458,28 @@ const animatedStyle = useAnimatedStyle(() => ({
 ## Troubleshooting
 
 ### Vision OCR Not Working
+
 - Check iOS version (requires iOS 13+)
 - Verify Vision framework is linked
 - Test on real device (not simulator)
 - Check permissions (if accessing photos)
 
 ### Skia Performance Issues
+
 - Reduce path complexity
 - Use `React.memo` on cell components
 - Limit number of rendered paths
 - Check for memory leaks
 
 ### MMKV Persistence Issues
+
 - Verify storage ID matches
 - Check encryption key (if used)
 - Test save/load cycle
 - Clear storage if corrupted
 
 ### State Sync Problems
+
 - Use single source of truth (Zustand store)
 - Avoid dual state in React components
 - Test undo/redo thoroughly

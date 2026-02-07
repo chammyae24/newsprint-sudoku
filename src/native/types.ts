@@ -30,7 +30,7 @@ export interface VisionOCRInterface {
    * @returns Array of OCR results with recognized digits
    */
   recognizeText(imagePath: string): Promise<OCRResult[]>;
-  
+
   /**
    * Check if the device may support Apple Pencil
    * @returns Stylus support information

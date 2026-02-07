@@ -1,6 +1,7 @@
 # Phase 4: Polish - Visual Effects & Animations Implementation Plan
 
 ## Overview
+
 This Phase focuses on adding the visual polish that makes Newsprint Sudoku stand out: Skia shaders for paper texture, smooth animations using React Native Reanimated, responsive layouts for landscape/portrait, audio feedback, and final UX refinements.
 
 ---
@@ -8,9 +9,11 @@ This Phase focuses on adding the visual polish that makes Newsprint Sudoku stand
 ## Step 1: Skia Shaders for "Newsprint" Effect
 
 ### 1.1 Create Paper Texture Shader
+
 **File:** `src/ui/shaders/PaperTexture.ts`
 
 **Step 1.1.1: Shader Implementation**
+
 ```typescript
 import { Skia, Shader, RuntimeEffect } from '@shopify/react-native-skia';
 
@@ -68,6 +71,7 @@ export const paperTextureEffect = RuntimeEffect.Make(shaderSource);
 ```
 
 **Step 1.1.2: Shader Component**
+
 ```typescript
 import { Rect, Shader } from '@shopify/react-native-skia';
 
@@ -94,9 +98,11 @@ export const PaperTexture: React.FC<PaperTextureProps> = ({ width, height }) => 
 ```
 
 ### 1.2 Create Ink Effect Shader
+
 **File:** `src/ui/shaders/InkEffect.ts`
 
 **Step 1.2.1: Slight Bleed Effect**
+
 ```typescript
 const inkShaderSource = `
 uniform vec3 u_resolution;
@@ -133,9 +139,11 @@ vec4 main(vec2 uv) {
 ## Step 2: Animations with React Native Reanimated
 
 ### 2.1 Cell Selection Animation
+
 **File:** `src/ui/animations/CellAnimations.ts`
 
 **Step 2.1.1: Selection Fade In**
+
 ```typescript
 import Animated, {
   useSharedValue,
@@ -181,9 +189,11 @@ export const SelectionAnimation: React.FC<SelectionAnimationProps> = ({
 ```
 
 ### 2.2 Mistake Shake Animation
+
 **File:** `src/ui/animations/MistakeAnimation.ts`
 
 **Step 2.2.1: Shake Effect**
+
 ```typescript
 interface MistakeAnimationProps {
   isError: boolean;
@@ -218,9 +228,11 @@ export const MistakeAnimation: React.FC<MistakeAnimationProps> = ({
 ```
 
 ### 2.3 Completion Flash Animation
+
 **File:** `src/ui/animations/CompletionAnimation.ts`
 
 **Step 2.3.1: Victory Flash**
+
 ```typescript
 interface CompletionAnimationProps {
   isCompleted: boolean;
@@ -266,9 +278,11 @@ export const CompletionAnimation: React.FC<CompletionAnimationProps> = ({
 ```
 
 ### 2.4 Mode Switch Animation
+
 **File:** `src/ui/animations/ModeSwitchAnimation.ts`
 
 **Step 2.4.1: Button Transition**
+
 ```typescript
 interface ModeButtonProps {
   mode: 'SOLVE' | 'NOTE';
@@ -319,9 +333,11 @@ export const ModeButton: React.FC<ModeButtonProps> = ({
 ## Step 3: Responsive Layout (Landscape/Portrait)
 
 ### 3.1 Create Responsive Grid Component
+
 **File:** `src/ui/components/ResponsiveGrid.tsx`
 
 **Step 3.1.1: Use Screen Dimensions**
+
 ```typescript
 import { useWindowDimensions } from 'react-native';
 
@@ -334,8 +350,8 @@ export const ResponsiveGrid: React.FC = () => {
   const footerHeight = isLandscape ? 0 : 200; // Sidebar in landscape
   const padding = 20;
 
-  const availableWidth = width - (padding * 2);
-  const availableHeight = height - headerHeight - footerHeight - (padding * 2);
+  const availableWidth = width - padding * 2;
+  const availableHeight = height - headerHeight - footerHeight - padding * 2;
 
   // Grid is square, use smaller dimension
   const gridSize = Math.min(availableWidth, availableHeight);
@@ -343,7 +359,7 @@ export const ResponsiveGrid: React.FC = () => {
 
   // Layout based on orientation
   const containerStyle = {
-    flexDirection: isLandscape ? 'row' : 'column' as 'row' | 'column',
+    flexDirection: isLandscape ? 'row' : ('column' as 'row' | 'column'),
   };
 
   //... render grid and controls
@@ -351,9 +367,11 @@ export const ResponsiveGrid: React.FC = () => {
 ```
 
 ### 3.2 Landscape Layout
+
 **File:** `src/ui/layouts/LandscapeLayout.tsx`
 
 **Step 3.2.1: Sidebar Controls**
+
 ```typescript
 export const LandscapeLayout: React.FC = () => {
   return (
@@ -374,9 +392,11 @@ export const LandscapeLayout: React.FC = () => {
 ```
 
 ### 3.3 Portrait Layout
+
 **File:** `src/ui/layouts/PortraitLayout.tsx`
 
 **Step 3.3.1: Bottom Controls**
+
 ```typescript
 export const PortraitLayout: React.FC = () => {
   return (
@@ -397,6 +417,7 @@ export const PortraitLayout: React.FC = () => {
 ```
 
 ### 3.4 Adaptive Layout Router
+
 **File:** `src/ui/layouts/AdaptiveLayout.tsx`
 
 ```typescript
@@ -413,9 +434,11 @@ export const AdaptiveLayout: React.FC = () => {
 ## Step 4: Audio Feedback
 
 ### 4.1 Sound Manager
+
 **File:** `src/audio/SoundManager.ts`
 
 **Step 4.1.1: Setup Expo Audio**
+
 ```bash
 npm install expo-av
 ```
@@ -438,10 +461,16 @@ export class SoundManager {
 
   async loadSounds() {
     // Load sound effects
-    await this.loadSound('digitPlace', require('../../assets/sounds/digitPlace.wav'));
+    await this.loadSound(
+      'digitPlace',
+      require('../../assets/sounds/digitPlace.wav')
+    );
     await this.loadSound('error', require('../../assets/sounds/error.wav'));
     await this.loadSound('victory', require('../../assets/sounds/victory.wav'));
-    await this.loadSound('pageTurn', require('../../assets/sounds/pageTurn.wav'));
+    await this.loadSound(
+      'pageTurn',
+      require('../../assets/sounds/pageTurn.wav')
+    );
   }
 
   private async loadSound(key: string, source: any) {
@@ -458,13 +487,14 @@ export class SoundManager {
 
   async stopAll() {
     await Promise.all(
-      Object.values(this.sounds).map(sound => sound.stopAsync())
+      Object.values(this.sounds).map((sound) => sound.stopAsync())
     );
   }
 }
 ```
 
 ### 4.2 Audio Triggers
+
 **File:** `src/store/gameStore.ts` (extend actions)
 
 ```typescript
@@ -504,9 +534,11 @@ const checkCompletion = (grid: Cell[][], solution: number[][]): boolean => {
 ## Step 5: Haptic Feedback
 
 ### 5.1 Haptic Manager
+
 **File:** `src/haptics/HapticManager.ts`
 
 **Step 5.1.1: Setup Expo Haptics**
+
 ```typescript
 import * as Haptics from 'expo-haptics';
 
@@ -539,6 +571,7 @@ export const HapticManager = {
 ```
 
 ### 5.2 Integrate with Actions
+
 **File:** `src/store/gameStore.ts` (extend)
 
 ```typescript
@@ -573,9 +606,11 @@ const setInputMode = (mode: InputMode) => {
 ## Step 6: UI Polish
 
 ### 6.1 Main Menu Design
+
 **File:** `src/ui/screens/MainMenu.tsx`
 
 **Step 6.1.1: Newspaper-Style Header**
+
 ```typescript
 export const MainMenu: React.FC = () => {
   const { navigation } = useNavigation();
@@ -629,6 +664,7 @@ export const MainMenu: React.FC = () => {
 ```
 
 ### 6.2 Custom Button Styles
+
 **File:** `src/ui/components/StyledButton.tsx`
 
 ```typescript
@@ -667,9 +703,11 @@ export const StyledButton: React.FC<StyledButtonProps> = ({
 ```
 
 ### 6.3 Victory Modal
+
 **File:** `src/ui/modals/VictoryModal.tsx`
 
 **Step 6.3.1: Newspaper Headline Style**
+
 ```typescript
 export const VictoryModal: React.FC<VictoryModalProps> = ({
   visible,
@@ -712,24 +750,30 @@ export const VictoryModal: React.FC<VictoryModalProps> = ({
 ## Step 7: Performance Optimization
 
 ### 7.1 Optimize Skia Rendering
+
 **File:** `src/ui/components/Grid.tsx`
 
 **Step 7.1.1: Memoize Cell Components**
+
 ```typescript
-const Cell = React.memo(({ row, col, width, height }: CellProps) => {
-  // ... cell rendering ...
-}, (prevProps, nextProps) => {
-  // Only re-render if cell data changed
-  return (
-    prevProps.row === nextProps.row &&
-    prevProps.col === nextProps.col &&
-    prevProps.width === nextProps.width &&
-    prevProps.height === nextProps.height
-  );
-});
+const Cell = React.memo(
+  ({ row, col, width, height }: CellProps) => {
+    // ... cell rendering ...
+  },
+  (prevProps, nextProps) => {
+    // Only re-render if cell data changed
+    return (
+      prevProps.row === nextProps.row &&
+      prevProps.col === nextProps.col &&
+      prevProps.width === nextProps.width &&
+      prevProps.height === nextProps.height
+    );
+  }
+);
 ```
 
 **Step 7.1.2: Use Worklets for Heavy Calculations**
+
 ```typescript
 import { runOnJS } from 'react-native-worklets-core';
 
@@ -741,9 +785,11 @@ const processCellData = (data: CellData) => {
 ```
 
 ### 7.2 Optimize Animations
+
 **File:** `src/ui/animations/OptimizedAnimations.ts`
 
 **Step 7.2.1: Use Shared Values Wisely**
+
 ```typescript
 // Avoid creating new shared values on every render
 const cachedScales = React.useRef(new Map<string, SharedValue<number>>());
@@ -757,13 +803,16 @@ const getScale = (key: string) => {
 ```
 
 ### 7.3 Reduce Re-renders
+
 **File:** `src/store/gameStore.ts`
 
 **Step 7.3.1: Selective State Subscription**
+
 ```typescript
 // Subscribe only to needed state
 export const useLives = () => useGameStore((state) => state.lives);
-export const useSelectedCell = () => useGameStore((state) => state.selectedCell);
+export const useSelectedCell = () =>
+  useGameStore((state) => state.selectedCell);
 export const useInputMode = () => useGameStore((state) => state.inputMode);
 ```
 
@@ -772,6 +821,7 @@ export const useInputMode = () => useGameStore((state) => state.inputMode);
 ## Step 8: Testing & Verification
 
 ### 8.1 Test Animations
+
 **File:** `tests/ui/animations.test.ts`
 
 - [ ] Selection animation triggers correctly
@@ -780,6 +830,7 @@ export const useInputMode = () => useGameStore((state) => state.inputMode);
 - [ ] Mode switch animation is smooth
 
 ### 8.2 Test Shaders
+
 **File:** `tests/ui/shaders.test.ts`
 
 - [ ] Paper texture renders without errors
@@ -787,6 +838,7 @@ export const useInputMode = () => useGameStore((state) => state.inputMode);
 - [ ] Ink bleed effect is subtle
 
 ### 8.3 Test Responsive Layout
+
 **File:** `tests/ui/layout.test.ts`
 
 - [ ] Portrait mode renders correctly
@@ -795,6 +847,7 @@ export const useInputMode = () => useGameStore((state) => state.inputMode);
 - [ ] Grid scales correctly on both orientations
 
 ### 8.4 Performance Testing
+
 **File:** `tests/performance/rendering.test.ts`
 
 - [ ] Grid renders at 60fps
@@ -807,12 +860,14 @@ export const useInputMode = () => useGameStore((state) => state.inputMode);
 ## Step 9: Verification Checklist
 
 ### 9.1 Visual Polish
+
 - [ ] Paper texture shader works
 - [ ] Vignette effect is visible
 - [ ] Ink bleed effect is subtle but present
 - [ ] Colors match specification (#F3EBDD, #2A2A2A, etc.)
 
 ### 9.2 Animations
+
 - [ ] Cell selection is animated
 - [ ] Error shake effect plays
 - [ ] Victory flash animation works
@@ -820,18 +875,21 @@ export const useInputMode = () => useGameStore((state) => state.inputMode);
 - [ ] All animations run at 60fps
 
 ### 9.3 Audio & Haptics
+
 - [ ] Digit place sound plays
 - [ ] Error sound plays
 - [ ] Victory sound plays
 - [ ] Haptic feedback works for all interactions
 
 ### 9.4 Responsive Layout
+
 - [ ] Portrait layout works
 - [ ] Landscape layout works
 - [ ] Orientation changes trigger layout update
 - [ ] Grid scales correctly in both modes
 
 ### 9.5 Performance
+
 - [ ] No memory leaks
 - [ ] Stable 60fps
 - [ ] Smooth transitions
@@ -874,6 +932,7 @@ export const useInputMode = () => useGameStore((state) => state.inputMode);
 ---
 
 ## Estimated Timeline
+
 - Step 1 (Shaders): 8 hours
 - Step 2 (Animations): 10 hours
 - Step 3 (Responsive Layout): 8 hours
@@ -891,6 +950,7 @@ export const useInputMode = () => useGameStore((state) => state.inputMode);
 ## Sound Assets Required
 
 Create these sound files (approximately):
+
 1. `digitPlace.wav` - Soft pen tap (~100ms)
 2. `error.wav` - Low thud/buzzer (~200ms)
 3. `victory.wav` - Triumphant fanfare (~2s)
@@ -901,6 +961,7 @@ Create these sound files (approximately):
 ## Final Notes
 
 After Phase 4, the app should be:
+
 - Visually stunning with unique paper aesthetic
 - Smooth and responsive with 60fps animations
 - Fully playable in both portrait and landscape
@@ -910,7 +971,9 @@ After Phase 4, the app should be:
 ---
 
 ## Next: App Store Submission Prep
+
 After all 4 phases are complete:
+
 1. Create build for TestFlight
 2. Prepare App Store screenshots
 3. Write app description

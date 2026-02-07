@@ -5,7 +5,11 @@
 
 import { isVisionOCRAvailable } from '../native/VisionOCR';
 import type { DrawingPath } from '../ui/components/DrawingCanvas';
-import { isJSRecognizerAvailable, recognizeDigitJS, type RecognitionResult } from './JSDigitRecognizer';
+import {
+  isJSRecognizerAvailable,
+  recognizeDigitJS,
+  type RecognitionResult,
+} from './JSDigitRecognizer';
 
 export type RecognizerType = 'vision' | 'js' | 'none';
 
@@ -53,7 +57,7 @@ export async function recognizeDigit(
   canvasSize: number
 ): Promise<RecognitionResult> {
   const type = getRecognizerType();
-  
+
   switch (type) {
     case 'vision':
       // TODO: When native Vision OCR is implemented, convert paths to image
@@ -62,13 +66,13 @@ export async function recognizeDigit(
       // const imagePath = await convertPathsToImage(paths, canvasSize);
       // const results = await VisionOCR.recognizeText(imagePath);
       // return convertVisionResultToRecognitionResult(results);
-      
+
       // Fall through to JS for now since image conversion isn't implemented
       return recognizeDigitJS(paths, canvasSize);
-      
+
     case 'js':
       return recognizeDigitJS(paths, canvasSize);
-      
+
     case 'none':
       throw new Error('No digit recognizer available');
   }

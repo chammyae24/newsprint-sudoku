@@ -1,4 +1,8 @@
-import { ConfigPlugin, withDangerousMod, withInfoPlist } from '@expo/config-plugins';
+import {
+  ConfigPlugin,
+  withDangerousMod,
+  withInfoPlist,
+} from '@expo/config-plugins';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -24,11 +28,11 @@ const withVisionOCR: ConfigPlugin = (config) => {
     async (config) => {
       const projectRoot = config.modRequest.projectRoot;
       const iosPath = path.join(projectRoot, 'ios');
-      
+
       // Get the project name from the config
       const projectName = config.modRequest.projectName || 'NewsprintSudoku';
       const modulePath = path.join(iosPath, projectName);
-      
+
       // Ensure directory exists
       if (!fs.existsSync(modulePath)) {
         fs.mkdirSync(modulePath, { recursive: true });
@@ -131,8 +135,11 @@ class VisionOCRModule: NSObject {
   }
 }
 `;
-      
-      fs.writeFileSync(path.join(modulePath, 'VisionOCRModule.swift'), swiftContent);
+
+      fs.writeFileSync(
+        path.join(modulePath, 'VisionOCRModule.swift'),
+        swiftContent
+      );
 
       // Create Objective-C bridge file
       const objcContent = `#import <React/RCTBridgeModule.h>
@@ -148,11 +155,14 @@ RCT_EXTERN_METHOD(checkStylusSupport:(RCTPromiseResolveBlock)resolve
 
 @end
 `;
-      
+
       fs.writeFileSync(path.join(modulePath, 'VisionOCRModule.m'), objcContent);
 
       // Create or update bridging header if needed
-      const bridgingHeaderPath = path.join(modulePath, `${projectName}-Bridging-Header.h`);
+      const bridgingHeaderPath = path.join(
+        modulePath,
+        `${projectName}-Bridging-Header.h`
+      );
       if (!fs.existsSync(bridgingHeaderPath)) {
         const bridgingContent = `//
 //  ${projectName}-Bridging-Header.h

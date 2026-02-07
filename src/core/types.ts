@@ -3,7 +3,7 @@ export enum Difficulty {
   MEDIUM = 'MEDIUM',
   HARD = 'HARD',
   EXPERT = 'EXPERT',
-  MASTER = 'MASTER'
+  MASTER = 'MASTER',
 }
 
 export interface SudokuCell {
@@ -32,7 +32,7 @@ export enum TechniqueType {
   X_WING = 'X-Wing',
   Y_WING = 'Y-Wing',
   SWORDFISH = 'Swordfish',
-  BUG_PLUS_ONE = 'BUG+1'
+  BUG_PLUS_ONE = 'BUG+1',
 }
 
 export interface Hint {

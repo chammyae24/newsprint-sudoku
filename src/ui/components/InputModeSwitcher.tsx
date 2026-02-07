@@ -1,102 +1,61 @@
 import * as Haptics from 'expo-haptics';
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import { InputMode, useGameStore } from '../../store/GameStore';
+import { cn } from '../../utils/cn';
 
 /**
  * Toggle between Solve and Note input modes.
  * Provides haptic feedback on mode change.
  */
 export function InputModeSwitcher() {
-  const inputMode = useGameStore(state => state.inputMode);
-  const setInputMode = useGameStore(state => state.setInputMode);
-  
+  const inputMode = useGameStore((state) => state.inputMode);
+  const setInputMode = useGameStore((state) => state.setInputMode);
+
   const handleModeChange = async (mode: InputMode) => {
     if (inputMode !== mode) {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       setInputMode(mode);
     }
   };
-  
+
   return (
-    <View style={styles.container}>
+    <View className="flex-row items-center justify-center gap-4 py-3">
       <Pressable
-        style={[
-          styles.modeButton,
-          inputMode === 'solve' && styles.activeButton,
-        ]}
+        className={cn(
+          'flex-row items-center gap-2 rounded-3xl px-5 py-2.5',
+          inputMode === 'solve' ? 'bg-blue-800' : 'bg-gray-100'
+        )}
         onPress={() => handleModeChange('solve')}
       >
-        <Text style={[
-          styles.modeIcon,
-          inputMode === 'solve' && styles.activeIcon,
-        ]}>
-          ✏️
-        </Text>
-        <Text style={[
-          styles.modeText,
-          inputMode === 'solve' && styles.activeText,
-        ]}>
+        <Text className="text-lg">✏️</Text>
+        <Text
+          className={cn(
+            'text-sm font-medium',
+            inputMode === 'solve' ? 'text-white' : 'text-gray-600'
+          )}
+        >
           Solve
         </Text>
       </Pressable>
-      
+
       <Pressable
-        style={[
-          styles.modeButton,
-          inputMode === 'note' && styles.activeButton,
-        ]}
+        className={cn(
+          'flex-row items-center gap-2 rounded-3xl px-5 py-2.5',
+          inputMode === 'note' ? 'bg-blue-800' : 'bg-gray-100'
+        )}
         onPress={() => handleModeChange('note')}
       >
-        <Text style={[
-          styles.modeIcon,
-          inputMode === 'note' && styles.activeIcon,
-        ]}>
-          📝
-        </Text>
-        <Text style={[
-          styles.modeText,
-          inputMode === 'note' && styles.activeText,
-        ]}>
+        <Text className="text-lg">📝</Text>
+        <Text
+          className={cn(
+            'text-sm font-medium',
+            inputMode === 'note' ? 'text-white' : 'text-gray-600'
+          )}
+        >
           Notes
         </Text>
       </Pressable>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 16,
-    paddingVertical: 12,
-  },
-  modeButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 24,
-    backgroundColor: '#f3f4f6',
-    gap: 8,
-  },
-  activeButton: {
-    backgroundColor: '#1e40af',
-  },
-  modeIcon: {
-    fontSize: 18,
-  },
-  activeIcon: {
-    // Icon color doesn't change with emoji
-  },
-  modeText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#4b5563',
-  },
-  activeText: {
-    color: '#ffffff',
-  },
-});

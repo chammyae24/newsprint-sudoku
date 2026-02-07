@@ -31,9 +31,9 @@ function relu(x: number): number {
 
 function softmax(arr: number[]): number[] {
   const maxVal = Math.max(...arr);
-  const expValues = arr.map(x => Math.exp(x - maxVal));
+  const expValues = arr.map((x) => Math.exp(x - maxVal));
   const sumExp = expValues.reduce((a, b) => a + b, 0);
-  return expValues.map(exp => exp / sumExp);
+  return expValues.map((exp) => exp / sumExp);
 }
 
 function matrixVectorMultiply(matrix: number[][], vector: number[]): number[] {
@@ -60,16 +60,31 @@ export function predictDigit(
   const flattenedInput = input.flat();
 
   // First hidden layer with sigmoid activation
-  const hidden1 = matrixVectorMultiply(weights.inputLayerWeights, flattenedInput);
-  const hidden1Output = hidden1.map((val, i) => sigmoid(val + weights.inputLayerBias[i]));
+  const hidden1 = matrixVectorMultiply(
+    weights.inputLayerWeights,
+    flattenedInput
+  );
+  const hidden1Output = hidden1.map((val, i) =>
+    sigmoid(val + weights.inputLayerBias[i])
+  );
 
   // Second hidden layer with ReLU activation
-  const hidden2 = matrixVectorMultiply(weights.hiddenLayerWeights, hidden1Output);
-  const hidden2Output = hidden2.map((val, i) => relu(val + weights.hiddenLayerBias[i]));
+  const hidden2 = matrixVectorMultiply(
+    weights.hiddenLayerWeights,
+    hidden1Output
+  );
+  const hidden2Output = hidden2.map((val, i) =>
+    relu(val + weights.hiddenLayerBias[i])
+  );
 
   // Output layer with softmax activation (11 classes: 0-9 + None)
-  const output = matrixVectorMultiply(weights.outputLayerWeights, hidden2Output);
-  const preActivationOutput = output.map((val, i) => val + weights.outputLayerBias[i]);
+  const output = matrixVectorMultiply(
+    weights.outputLayerWeights,
+    hidden2Output
+  );
+  const preActivationOutput = output.map(
+    (val, i) => val + weights.outputLayerBias[i]
+  );
   const finalOutput = softmax(preActivationOutput);
 
   // Find predicted class and confidence
@@ -101,7 +116,11 @@ export function getTopPredictions(
   const predictions = result.finalOutput
     .map((confidence, index) => ({ digit: index, confidence }))
     // Filter out the "none" class (class 10) unless it's the top prediction
-    .filter((p, _, arr) => p.digit < 10 || p.confidence === Math.max(...arr.map(x => x.confidence)))
+    .filter(
+      (p, _, arr) =>
+        p.digit < 10 ||
+        p.confidence === Math.max(...arr.map((x) => x.confidence))
+    )
     .sort((a, b) => b.confidence - a.confidence)
     .slice(0, topN);
 

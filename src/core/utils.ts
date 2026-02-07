@@ -16,7 +16,12 @@ export function shuffleArray<T>(array: T[]): T[] {
 /**
  * Checks if placing `num` at (row, col) is valid in a simple number grid.
  */
-export function isSafeInGrid(grid: number[][], row: number, col: number, num: number): boolean {
+export function isSafeInGrid(
+  grid: number[][],
+  row: number,
+  col: number,
+  num: number
+): boolean {
   // Check row and column
   for (let x = 0; x < 9; x++) {
     if (grid[row][x] === num || grid[x][col] === num) {
@@ -40,7 +45,12 @@ export function isSafeInGrid(grid: number[][], row: number, col: number, num: nu
 /**
  * Helper to check if num is safe within a specific 3x3 box only.
  */
-export function isSafeInBox(grid: number[][], rowStart: number, colStart: number, num: number): boolean {
+export function isSafeInBox(
+  grid: number[][],
+  rowStart: number,
+  colStart: number,
+  num: number
+): boolean {
   for (let i = 0; i < 3; i++) {
     for (let j = 0; j < 3; j++) {
       if (grid[rowStart + i][colStart + j] === num) {

@@ -46,16 +46,16 @@ console.log('\nSolving (Logical)...');
 const solved = SudokuSolver.solve(grid);
 
 if (solved) {
-    console.log('\nSolved Successfully (Logically)!');
-    printGrid(grid);
+  console.log('\nSolved Successfully (Logically)!');
+  printGrid(grid);
 } else {
-    console.log('\nLogical Solver failed (Expected for Hard/Expert).');
-    console.log('Attempting Brute Force to verify validity...');
-    
-    if (SudokuSolver.solveBruteForce(grid)) {
-        console.log('\nSolved Successfully (Brute Force)!');
-        printGrid(grid);
-    } else {
-        console.log('\nFAILED: Puzzle is invalid!');
-    }
+  console.log('\nLogical Solver failed (Expected for Hard/Expert).');
+  console.log('Attempting Brute Force to verify validity...');
+
+  if (SudokuSolver.solveBruteForce(grid)) {
+    console.log('\nSolved Successfully (Brute Force)!');
+    printGrid(grid);
+  } else {
+    console.log('\nFAILED: Puzzle is invalid!');
+  }
 }

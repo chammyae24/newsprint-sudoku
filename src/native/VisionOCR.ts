@@ -15,14 +15,16 @@ export const VisionOCR: VisionOCRInterface = {
     if (Platform.OS !== 'ios') {
       throw new Error('Vision OCR is only available on iOS');
     }
-    
+
     if (!VisionOCRModule) {
-      throw new Error('VisionOCRModule is not available. Did you run expo prebuild?');
+      throw new Error(
+        'VisionOCRModule is not available. Did you run expo prebuild?'
+      );
     }
-    
+
     return await VisionOCRModule.recognizeText(imagePath);
   },
-  
+
   /**
    * Check if the device may support Apple Pencil
    */
@@ -34,14 +36,14 @@ export const VisionOCR: VisionOCRInterface = {
         maySupportPencil: false,
       };
     }
-    
+
     if (!VisionOCRModule) {
       return {
         isPadDevice: false,
         maySupportPencil: false,
       };
     }
-    
+
     return await VisionOCRModule.checkStylusSupport();
   },
 };

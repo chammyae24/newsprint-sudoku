@@ -7,7 +7,9 @@ This folder contains all technical documentation for the Newsprint Sudoku projec
 ## Documents Overview
 
 ### 📋 PRD.md
+
 **Product Requirement Document**
+
 - Complete game design and specifications
 - Technical stack details
 - 13 logic engine techniques
@@ -19,7 +21,9 @@ This folder contains all technical documentation for the Newsprint Sudoku projec
 ---
 
 ### 🗺️ MASTER-PLAN.md
+
 **Master Implementation Plan**
+
 - Top-level overview of all 4 phases
 - Timeline estimates (182 hours, 22-25 days)
 - Milestones and sign-off criteria
@@ -32,7 +36,9 @@ This folder contains all technical documentation for the Newsprint Sudoku projec
 ---
 
 ### 📘 PHASE1-LOGIC-CORE-PLAN.md
+
 **Detailed Plan: Logic Core Implementation**
+
 - Sudoku generator algorithm
 - 13-technique logic engine
 - TypeScript type definitions
@@ -45,7 +51,9 @@ This folder contains all technical documentation for the Newsprint Sudoku projec
 ---
 
 ### 📙 PHASE2-NATIVE-BRIDGE-PLAN.md
+
 **Detailed Plan: Native Bridge & Input**
+
 - Expo Config Plugin setup
 - Swift Vision OCR module
 - Skia Drawing Canvas component
@@ -59,7 +67,9 @@ This folder contains all technical documentation for the Newsprint Sudoku projec
 ---
 
 ### 📓 PHASE3-GAME-LOOP-PLAN.md
+
 **Detailed Plan: Game Loop & Cell Logic**
+
 - Zustand state management
 - MMKV persistence
 - Cell data structure
@@ -73,7 +83,9 @@ This folder contains all technical documentation for the Newsprint Sudoku projec
 ---
 
 ### 📒 PHASE4-POLISH-PLAN.md
+
 **Detailed Plan: Visual Polish**
+
 - Skia shaders (paper texture, ink bleed)
 - React Native Reanimated animations
 - Responsive layouts (portrait/landscape)
@@ -88,7 +100,9 @@ This folder contains all technical documentation for the Newsprint Sudoku projec
 ---
 
 ### 📚 QUICK-REFERENCE.md
+
 **Quick Reference Guide**
+
 - Phase summaries
 - Complete file structure
 - Key data structures
@@ -133,30 +147,37 @@ This folder contains all technical documentation for the Newsprint Sudoku projec
 Each phase plan follows this structure:
 
 **1. Overview**
+
 - Phase objectives
 - Key components
 
 **2. Step-by-Step Implementation**
+
 - Detailed technical steps
 - Code examples
 - File locations
 
 **3. Testing Strategy**
+
 - Unit tests
 - Integration tests
 - Manual testing
 
 **4. Verification Checklist**
+
 - Completion criteria
 - Sign-off requirements
 
 **5. Deliverables**
+
 - What you'll have at the end
 
 **6. Estimated Timeline**
+
 - Time breakdown by sub-task
 
 **7. Next Phase**
+
 - Pre-requisites for moving forward
 
 ---
@@ -164,22 +185,26 @@ Each phase plan follows this structure:
 ## How to Use These Documents
 
 ### For Planning
+
 - Read MASTER-PLAN.md for timeline and milestones
 - Use specific phase plans for detailed task breakdown
 - Refer to QUICK-REFERENCE.md for quick lookups
 
 ### For Implementation
+
 - Start with the current phase plan
 - Follow steps in order
 - Check off verification items as you complete them
 - Update MASTER-PLAN.md progress
 
 ### For Troubleshooting
+
 - Check QUICK-REFERENCE.md → Troubleshooting section
 - Review specific phase's testing strategy
 - Verify against verification checklists
 
 ### For Onboarding
+
 - Read PRD.md (product vision)
 - Read MASTER-PLAN.md (roadmap)
 - Read QUICK-REFERENCE.md (reference)
@@ -190,6 +215,7 @@ Each phase plan follows this structure:
 ## Status Tracking
 
 Current Project Status:
+
 - ✅ Planning complete
 - ⏳ Phase 1: Not started
 - ⏳ Phase 2: Not started
@@ -230,6 +256,7 @@ docs/
 ## Key Specifications at a Glance
 
 ### Tech Stack
+
 - Framework: React Native (Expo)
 - Language: TypeScript
 - Rendering: @shopify/react-native-skia
@@ -238,12 +265,14 @@ docs/
 - Recognition: Apple Vision Framework
 
 ### Performance Targets
+
 - Puzzle Generation: <100ms
 - OCR Recognition: <500ms
 - Rendering: 60fps
 - Test Coverage: ≥80%
 
 ### Timeline
+
 - Total: 182 hours
 - Duration: 22-25 days
 - 4 Sequential Phases
@@ -261,9 +290,9 @@ docs/
 
 ## Version History
 
-| Version | Date | Changes |
-|---------|------|---------|
-| 1.0 | 2025-02-06 | Initial documentation creation |
+| Version | Date       | Changes                        |
+| ------- | ---------- | ------------------------------ |
+| 1.0     | 2025-02-06 | Initial documentation creation |
 
 ---
 

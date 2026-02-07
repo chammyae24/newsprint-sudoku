@@ -1,11 +1,13 @@
 ---
 description: Build and install on iPad using Mac with free Apple ID
 ---
+
 # Free Provisioning: Mac → iPad
 
 Build and install directly to iPad using a free Apple ID (no paid developer account).
 
 ## Prerequisites
+
 - macOS computer (physical, cloud, or borrowed)
 - Xcode 15+ installed
 - iPad connected via USB
@@ -14,6 +16,7 @@ Build and install directly to iPad using a free Apple ID (no paid developer acco
 ## Steps
 
 1. **Clone project to Mac:**
+
 ```bash
 git clone <your-repo-url>
 cd newsprint-sudoku
@@ -21,11 +24,13 @@ npm install
 ```
 
 2. **Generate native iOS project:**
+
 ```bash
 npx expo prebuild --platform ios
 ```
 
 3. **Open in Xcode:**
+
 ```bash
 open ios/newsprintsudoku.xcworkspace
 ```
@@ -48,16 +53,20 @@ open ios/newsprintsudoku.xcworkspace
    - App installs and runs!
 
 ## Limitations
+
 - App expires after **7 days** (rebuild to refresh)
 - Maximum **3 apps** per device with free account
 - Cannot use push notifications or certain APIs
 
 ## Testing Apple Pencil
+
 Once app is running on iPad:
+
 1. Navigate to "Test Handwriting" screen
 2. Use Apple Pencil to draw digits
 3. Test OCR recognition
 
 ## Tips
+
 - Keep the Mac available - you'll need it every 7 days
 - Cloud Mac services: MacinCloud, MacStadium, AWS EC2 Mac
