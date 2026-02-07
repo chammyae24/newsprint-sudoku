@@ -1,6 +1,7 @@
 import { Link } from 'expo-router';
 import React, { useCallback, useState } from 'react';
-import { Alert, Pressable, SafeAreaView, Text, View } from 'react-native';
+import { Alert, Pressable, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   getRecognizerDisplayName,
   isRecognizerAvailable,

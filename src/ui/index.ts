@@ -1,10 +1,6 @@
 // UI Components
 export { Cell } from './components/Cell';
-export {
-  DrawingCanvas,
-  type DrawingCanvasRef,
-  type DrawingPath,
-} from './components/DrawingCanvas';
+export { DrawingCanvas, type DrawingPath } from './components/DrawingCanvas';
 export { Eraser } from './components/Eraser';
 export { InkChooser } from './components/InkChooser';
 export { InputModeSwitcher } from './components/InputModeSwitcher';

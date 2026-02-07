@@ -1,12 +1,22 @@
 import { create } from 'zustand';
 import { SudokuGenerator } from '../core/SudokuGenerator';
 import type { Difficulty, SudokuCell } from '../core/types';
+import type { SavedGameState } from '../storage/gameStorage';
+import { cloneGrid } from '../utils/gridUtils';
+import { autoGenerateNotes } from '../utils/noteUtils';
 
 export type InputMode = 'solve' | 'note';
 
 export interface SelectedCell {
   row: number;
   col: number;
+}
+
+interface UndoableState {
+  grid: SudokuCell[][];
+  mistakes: number;
+  isGameOver: boolean;
+  isGameWon: boolean;
 }
 
 interface GameState {
@@ -29,11 +39,16 @@ interface GameState {
   // Handwriting mode (premium)
   isHandwritingEnabled: boolean;
   isPencilDetected: boolean;
+
+  // Undo/Redo stacks
+  undoStack: UndoableState[];
+  redoStack: UndoableState[];
 }
 
 interface GameActions {
   // Game lifecycle
   newGame: (difficulty: Difficulty) => void;
+  resumeGame: (savedState: SavedGameState) => void;
   resetGame: () => void;
 
   // Cell selection
@@ -57,6 +72,13 @@ interface GameActions {
   // Handwriting mode
   setHandwritingEnabled: (enabled: boolean) => void;
   setPencilDetected: (detected: boolean) => void;
+
+  // Undo/Redo
+  undo: () => void;
+  redo: () => void;
+
+  // Auto-notes
+  autoFillNotes: () => void;
 
   // Utility
   isValueInSelectedPeers: (value: number) => boolean;
@@ -87,6 +109,8 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
   isPaused: false,
   isHandwritingEnabled: false,
   isPencilDetected: false,
+  undoStack: [],
+  redoStack: [],
 
   // Actions
   newGame: (difficulty: Difficulty) => {
@@ -110,6 +134,8 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
       isGameWon: false,
       elapsedSeconds: 0,
       isPaused: false,
+      undoStack: [],
+      redoStack: [],
     });
   },
 
@@ -131,6 +157,24 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
       isGameWon: false,
       elapsedSeconds: 0,
       isPaused: false,
+      undoStack: [],
+      redoStack: [],
+    });
+  },
+
+  resumeGame: (savedState: SavedGameState) => {
+    set({
+      grid: savedState.grid as SudokuCell[][],
+      difficulty: savedState.difficulty as Difficulty,
+      selectedCell: savedState.selectedCell,
+      inputMode: savedState.inputMode as InputMode,
+      mistakes: savedState.mistakes,
+      isGameOver: savedState.isGameOver,
+      isGameWon: savedState.isGameWon,
+      elapsedSeconds: savedState.elapsedSeconds,
+      isPaused: false,
+      undoStack: [],
+      redoStack: [],
     });
   },
 
@@ -171,7 +215,7 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
           if (ri === row && ci === col) {
             return {
               ...c,
-              value: isCorrect ? value : c.value, // Only set if correct
+              value: value, // Always set the value (show wrong answers in red)
               notes: [], // Clear notes when setting value
             };
           }
@@ -297,6 +341,72 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
     }
 
     return false;
+  },
+
+  undo: () => {
+    set((state) => {
+      if (state.undoStack.length === 0) return state;
+
+      const previousState = state.undoStack[state.undoStack.length - 1];
+      const newUndoStack = state.undoStack.slice(0, -1);
+
+      return {
+        ...previousState,
+        undoStack: newUndoStack,
+        redoStack: [
+          ...state.redoStack,
+          {
+            grid: state.grid,
+            mistakes: state.mistakes,
+            isGameOver: state.isGameOver,
+            isGameWon: state.isGameWon,
+          },
+        ],
+      };
+    });
+  },
+
+  redo: () => {
+    set((state) => {
+      if (state.redoStack.length === 0) return state;
+
+      const nextState = state.redoStack[state.redoStack.length - 1];
+      const newRedoStack = state.redoStack.slice(0, -1);
+
+      return {
+        ...nextState,
+        undoStack: [
+          ...state.undoStack,
+          {
+            grid: state.grid,
+            mistakes: state.mistakes,
+            isGameOver: state.isGameOver,
+            isGameWon: state.isGameWon,
+          },
+        ],
+        redoStack: newRedoStack,
+      };
+    });
+  },
+
+  autoFillNotes: () => {
+    set((state) => {
+      // Save undo point
+      const undoPoint = {
+        grid: cloneGrid(state.grid),
+        mistakes: state.mistakes,
+        isGameOver: state.isGameOver,
+        isGameWon: state.isGameWon,
+      };
+
+      const newGrid = autoGenerateNotes(state.grid);
+
+      return {
+        grid: newGrid,
+        undoStack: [...state.undoStack, undoPoint],
+        redoStack: [],
+      };
+    });
   },
 
   getHint: () => {
