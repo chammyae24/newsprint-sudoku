@@ -1,9 +1,17 @@
 import { Link } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import { Alert, Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
-import { isVisionOCRAvailable } from '../../src/native/VisionOCR';
+import {
+  getRecognizerDisplayName,
+  isRecognizerAvailable,
+  recognizeDigit,
+  type RecognitionResult
+} from '../../src/recognition';
 import { DrawingCanvas, DrawingPath } from '../../src/ui/components/DrawingCanvas';
 import { InkChooser } from '../../src/ui/components/InkChooser';
+import { getDrawingRenderer } from '../../src/utils/skiaDetection';
+
+const CANVAS_SIZE = 280;
 
 export default function HandwritingTestScreen() {
   const [recognizedDigit, setRecognizedDigit] = useState<string | null>(null);
@@ -25,26 +33,24 @@ export default function HandwritingTestScreen() {
       return;
     }
     
+    if (!isRecognizerAvailable()) {
+      Alert.alert('No Recognizer', 'No digit recognizer is available');
+      return;
+    }
+    
     setIsProcessing(true);
     
     try {
-      if (!isVisionOCRAvailable()) {
-        // Mock result for testing without native module
-        Alert.alert(
-          'Vision OCR Not Available',
-          'Running in Expo Go - native module not loaded.\n\nTo test handwriting recognition:\n1. Run: eas build -p ios --profile development\n2. Install the dev build on your iPad\n3. Connect with: npx expo start --dev-client'
-        );
-        setRecognizedDigit('?');
-        setConfidence(0);
-        setIsProcessing(false);
-        return;
-      }
+      const result: RecognitionResult = await recognizeDigit(paths, CANVAS_SIZE);
       
-      // Note: In production with native build, you would convert paths to image here
-      // For now, just show a placeholder since we can't create images without Skia
-      Alert.alert('Native Build Required', 'Image conversion requires native Skia module.');
-      setRecognizedDigit('?');
-      setConfidence(0);
+      setRecognizedDigit(result.digit.toString());
+      setConfidence(result.confidence);
+      setCandidates(result.allCandidates);
+      
+      // Show ink chooser if confidence is low or for alternative options
+      if (result.confidence < 0.7 && result.allCandidates.length > 1) {
+        setShowInkChooser(true);
+      }
       
     } catch (error) {
       console.error('Recognition error:', error);
@@ -59,6 +65,7 @@ export default function HandwritingTestScreen() {
     setPaths([]);
     setRecognizedDigit(null);
     setConfidence(0);
+    setCandidates([]);
   }, []);
   
   const handleInkSelect = useCallback((digit: number) => {
@@ -83,9 +90,9 @@ export default function HandwritingTestScreen() {
       <View style={styles.canvasWrapper}>
         <DrawingCanvas
           key={drawKey}
-          size={280}
+          size={CANVAS_SIZE}
           strokeColor="#1a1a2e"
-          strokeWidth={4}
+          strokeWidth={8}
           onDrawingComplete={handleDrawingComplete}
         />
       </View>
@@ -99,6 +106,13 @@ export default function HandwritingTestScreen() {
             <Text style={styles.confidenceText}>
               Confidence: {Math.round(confidence * 100)}%
             </Text>
+            {candidates.length > 1 && (
+              <Pressable onPress={() => setShowInkChooser(true)}>
+                <Text style={styles.alternativesLink}>
+                  See alternatives
+                </Text>
+              </Pressable>
+            )}
           </>
         ) : (
           <Text style={styles.resultPlaceholder}>
@@ -130,7 +144,10 @@ export default function HandwritingTestScreen() {
       {/* Module Status */}
       <View style={styles.statusContainer}>
         <Text style={styles.statusText}>
-          Vision OCR: {isVisionOCRAvailable() ? '✅ Available' : '❌ Not available (need native build)'}
+          Recognition: {getRecognizerDisplayName()}
+        </Text>
+        <Text style={styles.statusText}>
+          Drawing: {getDrawingRenderer() === 'skia' ? '✅ Skia (native)' : '📝 SVG (fallback)'}
         </Text>
       </View>
       
@@ -196,6 +213,12 @@ const styles = StyleSheet.create({
   confidenceText: {
     fontSize: 14,
     color: '#6b7280',
+  },
+  alternativesLink: {
+    fontSize: 14,
+    color: '#2563eb',
+    marginTop: 8,
+    textDecorationLine: 'underline',
   },
   resultPlaceholder: {
     fontSize: 14,
