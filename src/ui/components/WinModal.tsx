@@ -14,6 +14,7 @@ interface WinModalProps {
   elapsedSeconds: number;
   onNewGame: () => void;
   onGoHome: () => void;
+  onShowStats: () => void;
 }
 
 const CONFETTI_COLORS = [
@@ -34,6 +35,7 @@ export const WinModal: React.FC<WinModalProps> = ({
   elapsedSeconds,
   onNewGame,
   onGoHome,
+  onShowStats,
 }) => {
   const confettiAnims = useRef(
     Array.from({ length: CONFETTI_COUNT }, () => ({
@@ -98,53 +100,58 @@ export const WinModal: React.FC<WinModalProps> = ({
   };
 
   return (
-    <Modal visible={visible} transparent animationType="fade">
-      <View style={styles.overlay}>
-        {/* Confetti */}
-        {confettiAnims.map((anim, i) => (
+    <>
+      <Modal visible={visible} transparent animationType="fade">
+        <View style={styles.overlay}>
+          {/* Confetti */}
+          {confettiAnims.map((anim, i) => (
+            <Animated.View
+              key={i}
+              style={[
+                styles.confetti,
+                {
+                  backgroundColor: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
+                  left: `${Math.random() * 100}%`,
+                  transform: [
+                    { translateY: anim.translateY },
+                    { translateX: anim.translateX },
+                    {
+                      rotate: anim.rotate.interpolate({
+                        inputRange: [0, 360],
+                        outputRange: ['0deg', '360deg'],
+                      }),
+                    },
+                  ],
+                  opacity: anim.opacity,
+                },
+              ]}
+            />
+          ))}
+
+          {/* Modal content */}
           <Animated.View
-            key={i}
-            style={[
-              styles.confetti,
-              {
-                backgroundColor: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
-                left: `${Math.random() * 100}%`,
-                transform: [
-                  { translateY: anim.translateY },
-                  { translateX: anim.translateX },
-                  {
-                    rotate: anim.rotate.interpolate({
-                      inputRange: [0, 360],
-                      outputRange: ['0deg', '360deg'],
-                    }),
-                  },
-                ],
-                opacity: anim.opacity,
-              },
-            ]}
-          />
-        ))}
+            style={[styles.modalContent, { transform: [{ scale: scaleAnim }] }]}
+          >
+            <Text style={styles.emoji}>🎉</Text>
+            <Text style={styles.title}>You Won!</Text>
+            <Text style={styles.subtitle}>Congratulations!</Text>
+            <Text style={styles.time}>Time: {formatTime(elapsedSeconds)}</Text>
 
-        {/* Modal content */}
-        <Animated.View
-          style={[styles.modalContent, { transform: [{ scale: scaleAnim }] }]}
-        >
-          <Text style={styles.emoji}>🎉</Text>
-          <Text style={styles.title}>You Won!</Text>
-          <Text style={styles.subtitle}>Congratulations!</Text>
-          <Text style={styles.time}>Time: {formatTime(elapsedSeconds)}</Text>
-
-          <View style={styles.buttons}>
-            <Pressable style={styles.primaryButton} onPress={onNewGame}>
-              <Text style={styles.primaryButtonText}>New Game</Text>
-            </Pressable>
-            <Pressable style={styles.secondaryButton} onPress={onGoHome}>
-              <Text style={styles.secondaryButtonText}>Go Home</Text>
-            </Pressable>
-          </View>
-        </Animated.View>
-      </View>
-    </Modal>
+            <View style={styles.buttons}>
+              <Pressable style={styles.statsButton} onPress={onShowStats}>
+                <Text style={styles.statsButtonText}>📊 View Stats</Text>
+              </Pressable>
+              <Pressable style={styles.primaryButton} onPress={onNewGame}>
+                <Text style={styles.primaryButtonText}>New Game</Text>
+              </Pressable>
+              <Pressable style={styles.secondaryButton} onPress={onGoHome}>
+                <Text style={styles.secondaryButtonText}>Go Home</Text>
+              </Pressable>
+            </View>
+          </Animated.View>
+        </View>
+      </Modal>
+    </>
   );
 };
 
@@ -223,6 +230,18 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     fontSize: 16,
     fontWeight: '500',
+  },
+  statsButton: {
+    backgroundColor: '#8B5CF6',
+    paddingVertical: 14,
+    paddingHorizontal: 32,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  statsButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
 

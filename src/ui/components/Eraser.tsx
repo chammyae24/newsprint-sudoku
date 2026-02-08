@@ -15,7 +15,11 @@ export function Eraser() {
   const canErase = React.useMemo(() => {
     if (!selectedCell) return false;
     const cell = grid[selectedCell.row][selectedCell.col];
-    return !cell.isGiven && (cell.value !== null || cell.notes.length > 0);
+    return (
+      !cell.isGiven &&
+      ((cell.value !== null && cell.value !== cell.solutionValue) ||
+        cell.notes.length > 0)
+    );
   }, [selectedCell, grid]);
 
   const handlePress = async () => {

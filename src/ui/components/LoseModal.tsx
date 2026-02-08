@@ -12,6 +12,7 @@ interface LoseModalProps {
   visible: boolean;
   onNewGame: () => void;
   onGoHome: () => void;
+  onShowStats: () => void;
 }
 
 /**
@@ -21,6 +22,7 @@ export const LoseModal: React.FC<LoseModalProps> = ({
   visible,
   onNewGame,
   onGoHome,
+  onShowStats,
 }) => {
   const shakeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0)).current;
@@ -65,32 +67,37 @@ export const LoseModal: React.FC<LoseModalProps> = ({
   }, [visible, scaleAnim, shakeAnim]);
 
   return (
-    <Modal visible={visible} transparent animationType="fade">
-      <View style={styles.overlay}>
-        <Animated.View
-          style={[
-            styles.modalContent,
-            {
-              transform: [{ scale: scaleAnim }, { translateX: shakeAnim }],
-            },
-          ]}
-        >
-          <Text style={styles.emoji}>😢</Text>
-          <Text style={styles.title}>Game Over</Text>
-          <Text style={styles.subtitle}>You ran out of lives</Text>
-          <Text style={styles.encouragement}>Don't give up! Try again.</Text>
+    <>
+      <Modal visible={visible} transparent animationType="fade">
+        <View style={styles.overlay}>
+          <Animated.View
+            style={[
+              styles.modalContent,
+              {
+                transform: [{ scale: scaleAnim }, { translateX: shakeAnim }],
+              },
+            ]}
+          >
+            <Text style={styles.emoji}>😢</Text>
+            <Text style={styles.title}>Game Over</Text>
+            <Text style={styles.subtitle}>You ran out of lives</Text>
+            <Text style={styles.encouragement}>Don't give up! Try again.</Text>
 
-          <View style={styles.buttons}>
-            <Pressable style={styles.primaryButton} onPress={onNewGame}>
-              <Text style={styles.primaryButtonText}>Try Again</Text>
-            </Pressable>
-            <Pressable style={styles.secondaryButton} onPress={onGoHome}>
-              <Text style={styles.secondaryButtonText}>Go Home</Text>
-            </Pressable>
-          </View>
-        </Animated.View>
-      </View>
-    </Modal>
+            <View style={styles.buttons}>
+              <Pressable style={styles.statsButton} onPress={onShowStats}>
+                <Text style={styles.statsButtonText}>📊 View Stats</Text>
+              </Pressable>
+              <Pressable style={styles.primaryButton} onPress={onNewGame}>
+                <Text style={styles.primaryButtonText}>Try Again</Text>
+              </Pressable>
+              <Pressable style={styles.secondaryButton} onPress={onGoHome}>
+                <Text style={styles.secondaryButtonText}>Go Home</Text>
+              </Pressable>
+            </View>
+          </Animated.View>
+        </View>
+      </Modal>
+    </>
   );
 };
 
@@ -161,6 +168,18 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     fontSize: 16,
     fontWeight: '500',
+  },
+  statsButton: {
+    backgroundColor: '#8B5CF6',
+    paddingVertical: 14,
+    paddingHorizontal: 32,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  statsButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
 

@@ -2,6 +2,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const CURRENT_GAME_KEY = 'newsprint-sudoku-currentGame';
 
+import type { MoveRecord } from '../core/types';
+
 export interface SavedGameState {
   grid: unknown; // Serialized SudokuCell[][]
   difficulty: string;
@@ -12,6 +14,7 @@ export interface SavedGameState {
   isGameWon: boolean;
   elapsedSeconds: number;
   savedAt: number; // Timestamp
+  moveHistory: MoveRecord[];
 }
 
 // In-memory cache for sync reads

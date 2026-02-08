@@ -1,16 +1,19 @@
-import { Link, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import React, { useEffect, useRef } from 'react';
 import { AppState, Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Difficulty } from '../../src/core/types';
 import { clearSavedGame, saveGameState } from '../../src/storage/gameStorage';
 import { useGameStore } from '../../src/store/GameStore';
+import { BoardDrawingOverlay } from '../../src/ui/components/BoardDrawingOverlay';
 import { Cell } from '../../src/ui/components/Cell';
 import { Eraser } from '../../src/ui/components/Eraser';
+import { HintOverlay } from '../../src/ui/components/HintOverlay';
 import { InputModeSwitcher } from '../../src/ui/components/InputModeSwitcher';
 import { Keypad } from '../../src/ui/components/Keypad';
 import { LevelSelector } from '../../src/ui/components/LevelSelector';
 import { LoseModal } from '../../src/ui/components/LoseModal';
+import { MoveHistoryReview } from '../../src/ui/components/MoveHistoryReview';
 import { WinModal } from '../../src/ui/components/WinModal';
 import { haptics } from '../../src/utils/haptics';
 
@@ -28,8 +31,17 @@ export default function GameScreen() {
   const elapsedSeconds = useGameStore((state) => state.elapsedSeconds);
   const tick = useGameStore((state) => state.tick);
   const isPaused = useGameStore((state) => state.isPaused);
+  const autoFillNotes = useGameStore((state) => state.autoFillNotes);
+  const isDrawingMode = useGameStore((state) => state.isDrawingMode);
+  const toggleDrawingMode = useGameStore((state) => state.toggleDrawingMode);
+  const isFastSolveMode = useGameStore((state) => state.isFastSolveMode);
+  const toggleFastSolveMode = useGameStore(
+    (state) => state.toggleFastSolveMode
+  );
+  const requestHint = useGameStore((state) => state.requestHint);
 
   const [showLevelSelector, setShowLevelSelector] = React.useState(false);
+  const [showStats, setShowStats] = React.useState(false);
   const appState = useRef(AppState.currentState);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -111,6 +123,7 @@ export default function GameScreen() {
       isGameOver,
       isGameWon,
       elapsedSeconds,
+      moveHistory: useGameStore.getState().moveHistory,
       savedAt: Date.now(),
     });
   };
@@ -157,7 +170,7 @@ export default function GameScreen() {
 
       {/* Grid */}
       <View className="items-center py-4">
-        <View className="border-2 border-gray-700 bg-white">
+        <View className="relative border-2 border-gray-700 bg-white">
           {grid.map((row, rowIndex) => (
             <View key={rowIndex} className="flex-row">
               {row.map((cell, colIndex) => (
@@ -170,6 +183,12 @@ export default function GameScreen() {
               ))}
             </View>
           ))}
+          {/* Drawing overlay - positioned on top of grid */}
+          {isDrawingMode && (
+            <BoardDrawingOverlay
+              gridSize={38 * 9} // 38 is cell size
+            />
+          )}
         </View>
       </View>
 
@@ -191,23 +210,60 @@ export default function GameScreen() {
       <Keypad />
 
       {/* Actions */}
-      <View className="flex-row items-center justify-center gap-4 py-3">
+      <View className="flex-row flex-wrap items-center justify-center gap-3 py-3">
         <Eraser />
+        <Pressable
+          className={`flex-row items-center gap-1.5 rounded-full px-4 py-2.5 ${
+            isFastSolveMode ? 'bg-blue-500' : 'bg-blue-100'
+          }`}
+          onPress={() => toggleFastSolveMode()}
+        >
+          <Text
+            className={`text-sm font-medium ${
+              isFastSolveMode ? 'text-white' : 'text-blue-700'
+            }`}
+          >
+            ⚡ {isFastSolveMode ? 'Fast Solve ON' : 'Fast Solve'}
+          </Text>
+        </Pressable>
+        <Pressable
+          className={`flex-row items-center gap-1.5 rounded-full px-4 py-2.5 ${
+            isDrawingMode ? 'bg-purple-500' : 'bg-purple-100'
+          }`}
+          onPress={() => toggleDrawingMode()}
+        >
+          <Text
+            className={`text-sm font-medium ${
+              isDrawingMode ? 'text-white' : 'text-purple-700'
+            }`}
+          >
+            ✏️ {isDrawingMode ? 'Drawing ON' : 'Draw'}
+          </Text>
+        </Pressable>
+        <Pressable
+          className="flex-row items-center gap-1.5 rounded-full bg-green-100 px-4 py-2.5"
+          onPress={() => autoFillNotes()}
+        >
+          <Text className="text-sm font-medium text-green-700">
+            📝 Auto Notes
+          </Text>
+        </Pressable>
         <Pressable
           className="flex-row items-center gap-1.5 rounded-full bg-blue-100 px-4 py-2.5"
           onPress={() => setShowLevelSelector(true)}
         >
           <Text className="text-sm font-medium text-blue-700">🔄 New Game</Text>
         </Pressable>
-        <Link
-          href={'/test/handwriting' as never}
-          className="rounded-full bg-amber-100 px-4 py-2.5"
+        <Pressable
+          className="flex-row items-center gap-1.5 rounded-full bg-yellow-100 px-4 py-2.5"
+          onPress={() => requestHint()}
         >
-          <Text className="text-sm font-medium text-amber-600">
-            ✏️ Test Handwriting
-          </Text>
-        </Link>
+          <Text className="text-sm font-medium text-yellow-700">💡 Hint</Text>
+        </Pressable>
       </View>
+
+      {/* Hint Overlay */}
+      <HintOverlay />
 
       {/* Level Selector Drawer */}
       <LevelSelector
@@ -218,17 +274,25 @@ export default function GameScreen() {
 
       {/* Win Modal */}
       <WinModal
-        visible={isGameWon}
+        visible={isGameWon && !showStats}
         elapsedSeconds={elapsedSeconds}
         onNewGame={handleNewGame}
         onGoHome={handleGoHome}
+        onShowStats={() => setShowStats(true)}
       />
 
       {/* Lose Modal */}
       <LoseModal
-        visible={isGameOver && !isGameWon}
+        visible={isGameOver && !isGameWon && !showStats}
         onNewGame={handleNewGame}
         onGoHome={handleGoHome}
+        onShowStats={() => setShowStats(true)}
+      />
+
+      {/* Move History Review */}
+      <MoveHistoryReview
+        visible={showStats}
+        onClose={() => setShowStats(false)}
       />
     </SafeAreaView>
   );

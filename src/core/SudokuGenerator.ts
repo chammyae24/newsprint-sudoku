@@ -13,19 +13,67 @@ export class SudokuGenerator {
     grid: SudokuCell[][];
     solution: number[][];
   } {
-    // 1. Create an empty grid
-    const solutionGrid = this.createEmptyGrid();
+    // 5. Validate Difficulty (For Hard/Expert/Master)
+    // If it's too easy (solvable by basics), try again.
+    // Limit retries to avoid infinite loops on slow devices.
+    let attempts = 0;
+    while (attempts < 10) {
+      // 1. Create an empty grid
+      const solutionGrid = this.createEmptyGrid();
 
-    // 2. Fill the diagonal 3x3 boxes (independent, so fast and valid)
-    this.fillDiagonalBoxes(solutionGrid);
+      // 2. Fill the diagonal 3x3 boxes (independent, so fast and valid)
+      this.fillDiagonalBoxes(solutionGrid);
 
-    // 3. Solve the rest (backtracking) to get a full valid grid
-    if (!this.solve(solutionGrid)) {
-      throw new Error('Failed to generate a valid Sudoku grid');
+      // 3. Solve the rest (backtracking) to get a full valid grid
+      if (!this.solve(solutionGrid)) {
+        throw new Error('Failed to generate a valid Sudoku grid');
+      }
+
+      // Clone the solution for the final puzzle state
+      const puzzleGrid: SudokuCell[][] = solutionGrid.map((row) =>
+        row.map((val) => ({
+          value: val,
+          solutionValue: val,
+          isGiven: true,
+          notes: [],
+        }))
+      );
+
+      // 4. Remove numbers (dig holes) based on difficulty
+      this.removeNumbers(puzzleGrid, difficulty);
+
+      // 5. Check logical difficulty
+      if (
+        difficulty === Difficulty.EXPERT ||
+        difficulty === Difficulty.MASTER ||
+        difficulty === Difficulty.HARD
+      ) {
+        // Clone to test solving without mutating result
+        const testGrid = puzzleGrid.map((row) =>
+          row.map((c) => ({ ...c, notes: [] }))
+        );
+
+        const solvableByBasics = SudokuSolver.solveBasics(testGrid);
+
+        if (solvableByBasics) {
+          // Too easy for this level!
+          attempts++;
+          continue; // Try again
+        }
+      }
+
+      return {
+        grid: puzzleGrid,
+        solution: solutionGrid,
+      };
     }
 
-    // Clone the solution for the final puzzle state
-    const puzzleGrid: SudokuCell[][] = solutionGrid.map((row) =>
+    // Fallback if we exceeded retries (should be rare)
+    // Just return the last one generated
+    const solutionGrid = this.createEmptyGrid();
+    this.fillDiagonalBoxes(solutionGrid);
+    this.solve(solutionGrid);
+    const fallbackGrid = solutionGrid.map((row) =>
       row.map((val) => ({
         value: val,
         solutionValue: val,
@@ -33,14 +81,8 @@ export class SudokuGenerator {
         notes: [],
       }))
     );
-
-    // 4. Remove numbers (dig holes) based on difficulty
-    this.removeNumbers(puzzleGrid, difficulty);
-
-    return {
-      grid: puzzleGrid,
-      solution: solutionGrid,
-    };
+    this.removeNumbers(fallbackGrid, difficulty);
+    return { grid: fallbackGrid, solution: solutionGrid };
   }
 
   private static createEmptyGrid(): number[][] {

@@ -45,6 +45,12 @@ const LEVELS: {
     description: 'Ultimate challenge',
     color: '#7C3AED',
   },
+  {
+    difficulty: Difficulty.MASTER,
+    label: 'Master',
+    description: 'Ultimate challenge',
+    color: '#7C3AED',
+  },
 ];
 
 /**
