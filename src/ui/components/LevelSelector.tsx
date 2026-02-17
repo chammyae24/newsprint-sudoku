@@ -19,42 +19,36 @@ const LEVELS: {
   difficulty: Difficulty;
   label: string;
   description: string;
-  color: string;
 }[] = [
   {
     difficulty: Difficulty.EASY,
     label: 'Easy',
     description: 'Perfect for beginners',
-    color: '#10B981',
   },
   {
     difficulty: Difficulty.MEDIUM,
     label: 'Medium',
     description: 'A bit more challenging',
-    color: '#F59E0B',
   },
   {
     difficulty: Difficulty.HARD,
     label: 'Hard',
     description: 'For experienced players',
-    color: '#EF4444',
   },
   {
     difficulty: Difficulty.EXPERT,
     label: 'Expert',
     description: 'Ultimate challenge',
-    color: '#7C3AED',
   },
   {
     difficulty: Difficulty.MASTER,
     label: 'Master',
-    description: 'Ultimate challenge',
-    color: '#7C3AED',
+    description: 'The final frontier',
   },
 ];
 
 /**
- * Bottom drawer component for selecting difficulty level.
+ * Level selector drawer — newsprint styled.
  */
 export const LevelSelector: React.FC<LevelSelectorProps> = ({
   visible,
@@ -88,12 +82,10 @@ export const LevelSelector: React.FC<LevelSelectorProps> = ({
       animationType="fade"
       onRequestClose={onClose}
     >
-      {/* Backdrop */}
       <Pressable style={styles.backdrop} onPress={onClose}>
         <View />
       </Pressable>
 
-      {/* Drawer */}
       <Animated.View
         style={[styles.drawer, { transform: [{ translateY: slideAnim }] }]}
       >
@@ -102,15 +94,16 @@ export const LevelSelector: React.FC<LevelSelectorProps> = ({
           <View style={styles.handle} />
         </View>
 
-        {/* Title */}
         <Text style={styles.title}>Select Difficulty</Text>
 
-        {/* Level Options */}
         <View style={styles.levelsContainer}>
           {LEVELS.map((level) => (
             <Pressable
               key={level.difficulty}
-              style={[styles.levelButton, { borderLeftColor: level.color }]}
+              style={({ pressed }) => [
+                styles.levelButton,
+                pressed && styles.levelButtonPressed,
+              ]}
               onPress={() => handleSelect(level.difficulty)}
             >
               <View style={styles.levelContent}>
@@ -122,7 +115,6 @@ export const LevelSelector: React.FC<LevelSelectorProps> = ({
           ))}
         </View>
 
-        {/* Cancel */}
         <Pressable style={styles.cancelButton} onPress={onClose}>
           <Text style={styles.cancelText}>Cancel</Text>
         </Pressable>
@@ -134,18 +126,20 @@ export const LevelSelector: React.FC<LevelSelectorProps> = ({
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(26, 20, 16, 0.5)',
   },
   drawer: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    backgroundColor: '#F5EDE0',
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
     paddingHorizontal: 20,
     paddingBottom: 40,
+    borderTopWidth: 3,
+    borderTopColor: '#2A2118',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.15,
@@ -159,45 +153,53 @@ const styles = StyleSheet.create({
   handle: {
     width: 40,
     height: 4,
-    backgroundColor: '#D1D5DB',
+    backgroundColor: '#C4B08A',
     borderRadius: 2,
   },
   title: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#1F2937',
+    fontSize: 24,
+    fontFamily: 'PlayfairDisplay_700Bold',
+    color: '#2A2118',
     textAlign: 'center',
     marginBottom: 20,
   },
   levelsContainer: {
-    gap: 12,
+    gap: 10,
   },
   levelButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#F9FAFB',
-    borderRadius: 12,
-    borderLeftWidth: 4,
-    paddingVertical: 16,
+    backgroundColor: '#EDE3D0',
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: '#D4C5A8',
+    borderBottomWidth: 2,
+    paddingVertical: 14,
     paddingHorizontal: 16,
+  },
+  levelButtonPressed: {
+    backgroundColor: '#E0D5BF',
+    transform: [{ scale: 0.98 }],
   },
   levelContent: {
     flex: 1,
   },
   levelLabel: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#1F2937',
+    fontFamily: 'PlayfairDisplay_700Bold',
+    color: '#2A2118',
     marginBottom: 2,
   },
   levelDescription: {
-    fontSize: 14,
-    color: '#6B7280',
+    fontSize: 13,
+    fontFamily: 'Lora_400Regular_Italic',
+    color: '#8B7355',
   },
   arrow: {
     fontSize: 20,
-    color: '#9CA3AF',
+    color: '#8B7355',
+    fontFamily: 'PlayfairDisplay_700Bold',
   },
   cancelButton: {
     marginTop: 16,
@@ -206,8 +208,8 @@ const styles = StyleSheet.create({
   },
   cancelText: {
     fontSize: 16,
-    fontWeight: '500',
-    color: '#6B7280',
+    fontFamily: 'Lora_400Regular',
+    color: '#8B7355',
   },
 });
 

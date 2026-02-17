@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import React, { useEffect, useRef } from 'react';
-import { AppState, Pressable, Text, View } from 'react-native';
+import { AppState, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Difficulty } from '../../src/core/types';
 import { clearSavedGame, saveGameState } from '../../src/storage/gameStorage';
@@ -16,6 +16,14 @@ import { LoseModal } from '../../src/ui/components/LoseModal';
 import { MoveHistoryReview } from '../../src/ui/components/MoveHistoryReview';
 import { WinModal } from '../../src/ui/components/WinModal';
 import { haptics } from '../../src/utils/haptics';
+
+const DIFFICULTY_LABELS: Record<string, string> = {
+  EASY: 'EASY',
+  MEDIUM: 'MEDIUM',
+  HARD: 'HARD',
+  EXPERT: 'EXPERT',
+  MASTER: 'MASTER',
+};
 
 export default function GameScreen() {
   const router = useRouter();
@@ -81,7 +89,6 @@ export default function GameScreen() {
         appState.current === 'active' &&
         nextAppState.match(/inactive|background/)
       ) {
-        // Save game when going to background
         saveCurrentGame();
       }
       appState.current = nextAppState;
@@ -97,7 +104,7 @@ export default function GameScreen() {
     const hasEmptyGrid = grid.every((row) =>
       row.every((cell) => !cell.isGiven)
     );
-    if (hasEmptyGrid) return; // Don't save empty game
+    if (hasEmptyGrid) return;
 
     const timeout = setTimeout(() => {
       saveCurrentGame();
@@ -148,31 +155,52 @@ export default function GameScreen() {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
+  // Remaining lives display
+  const remainingLives = maxMistakes - mistakes;
+  const hearts = Array.from({ length: maxMistakes }, (_, i) => {
+    if (i < remainingLives) return '♥';
+    return '✕';
+  });
+
   return (
-    <SafeAreaView className="flex-1 bg-slate-50">
+    <SafeAreaView style={styles.container}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        bounces={false}
+      >
       {/* Header */}
-      <View className="px-5 pb-2 pt-4">
-        <Text className="text-center text-2xl font-bold text-gray-800">
-          Newsprint Sudoku
+      <View style={styles.header}>
+        <Text style={styles.difficultyText}>
+          DIFFICULTY: {DIFFICULTY_LABELS[difficulty] || difficulty}
         </Text>
-        <View className="mt-2 flex-row justify-between">
-          <Text className="text-sm text-gray-500">
-            ❤️ {maxMistakes - mistakes}/{maxMistakes}
-          </Text>
-          <Text className="text-sm font-medium text-gray-600">
-            ⏱️ {formatTime(elapsedSeconds)}
-          </Text>
-          <Text className="text-sm text-gray-500">
-            {inputMode === 'solve' ? '✏️ Solve' : '📝 Notes'}
-          </Text>
+        <View style={styles.headerCenter}>
+          <View style={styles.timerStrip}>
+            <Text style={styles.timerText}>⏱️ {formatTime(elapsedSeconds)}</Text>
+          </View>
         </View>
+        <Text style={styles.livesText}>
+          {hearts.map((h, i) => (
+            <Text
+              key={i}
+              style={
+                i < remainingLives ? styles.heartFilled : styles.heartLost
+              }
+            >
+              {h}{' '}
+            </Text>
+          ))}
+        </Text>
       </View>
 
+      {/* Input Mode Switcher */}
+      <InputModeSwitcher />
+
       {/* Grid */}
-      <View className="items-center py-4">
-        <View className="relative border-2 border-gray-700 bg-white">
+      <View style={styles.gridWrapper}>
+        <View style={styles.gridBorder}>
           {grid.map((row, rowIndex) => (
-            <View key={rowIndex} className="flex-row">
+            <View key={rowIndex} style={styles.gridRow}>
               {row.map((cell, colIndex) => (
                 <Cell
                   key={`${rowIndex}-${colIndex}`}
@@ -193,74 +221,75 @@ export default function GameScreen() {
       </View>
 
       {/* Selected cell info */}
-      <View className="items-center py-2">
+      <View style={styles.selectionInfo}>
         {selectedCell ? (
-          <Text className="text-sm text-gray-500">
+          <Text style={styles.selectionText}>
             Selected: Row {selectedCell.row + 1}, Col {selectedCell.col + 1}
           </Text>
         ) : (
-          <Text className="text-sm text-gray-500">Tap a cell to select</Text>
+          <Text style={styles.selectionText}>Tap a cell to select</Text>
         )}
       </View>
 
-      {/* Input Mode Switcher */}
-      <InputModeSwitcher />
+
 
       {/* Keypad */}
       <Keypad />
 
       {/* Actions */}
-      <View className="flex-row flex-wrap items-center justify-center gap-3 py-3">
+      <View style={styles.actionsRow}>
         <Eraser />
+
         <Pressable
-          className={`flex-row items-center gap-1.5 rounded-full px-4 py-2.5 ${
-            isFastSolveMode ? 'bg-blue-500' : 'bg-blue-100'
-          }`}
+          style={[
+            styles.actionButton,
+            isFastSolveMode && styles.actionButtonActive,
+          ]}
           onPress={() => toggleFastSolveMode()}
         >
           <Text
-            className={`text-sm font-medium ${
-              isFastSolveMode ? 'text-white' : 'text-blue-700'
-            }`}
+            style={[
+              styles.actionText,
+              isFastSolveMode && styles.actionTextActive,
+            ]}
           >
-            ⚡ {isFastSolveMode ? 'Fast Solve ON' : 'Fast Solve'}
+            ⚡ {isFastSolveMode ? 'Fast ON' : 'Fast Solve'}
           </Text>
         </Pressable>
+
         <Pressable
-          className={`flex-row items-center gap-1.5 rounded-full px-4 py-2.5 ${
-            isDrawingMode ? 'bg-purple-500' : 'bg-purple-100'
-          }`}
+          style={[
+            styles.actionButton,
+            isDrawingMode && styles.actionButtonActive,
+          ]}
           onPress={() => toggleDrawingMode()}
         >
           <Text
-            className={`text-sm font-medium ${
-              isDrawingMode ? 'text-white' : 'text-purple-700'
-            }`}
+            style={[
+              styles.actionText,
+              isDrawingMode && styles.actionTextActive,
+            ]}
           >
-            ✏️ {isDrawingMode ? 'Drawing ON' : 'Draw'}
+            ✏️ {isDrawingMode ? 'Draw ON' : 'Draw'}
           </Text>
         </Pressable>
-        <Pressable
-          className="flex-row items-center gap-1.5 rounded-full bg-green-100 px-4 py-2.5"
-          onPress={() => autoFillNotes()}
-        >
-          <Text className="text-sm font-medium text-green-700">
-            📝 Auto Notes
-          </Text>
+
+        <Pressable style={styles.actionButton} onPress={() => autoFillNotes()}>
+          <Text style={styles.actionText}>📝 Notes</Text>
         </Pressable>
+
         <Pressable
-          className="flex-row items-center gap-1.5 rounded-full bg-blue-100 px-4 py-2.5"
+          style={styles.actionButton}
           onPress={() => setShowLevelSelector(true)}
         >
-          <Text className="text-sm font-medium text-blue-700">🔄 New Game</Text>
+          <Text style={styles.actionText}>🔄 New</Text>
         </Pressable>
-        <Pressable
-          className="flex-row items-center gap-1.5 rounded-full bg-yellow-100 px-4 py-2.5"
-          onPress={() => requestHint()}
-        >
-          <Text className="text-sm font-medium text-yellow-700">💡 Hint</Text>
+
+        <Pressable style={styles.actionButton} onPress={() => requestHint()}>
+          <Text style={styles.actionText}>🔍 Hint</Text>
         </Pressable>
       </View>
+      </ScrollView>
 
       {/* Hint Overlay */}
       <HintOverlay />
@@ -283,7 +312,7 @@ export default function GameScreen() {
 
       {/* Lose Modal */}
       <LoseModal
-        visible={isGameOver && !isGameWon && !showStats}
+        visible={isGameOver && !isGameWon && !showStats && !showLevelSelector}
         onNewGame={handleNewGame}
         onGoHome={handleGoHome}
         onShowStats={() => setShowStats(true)}
@@ -297,3 +326,131 @@ export default function GameScreen() {
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#F5EDE0',
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: 8,
+  },
+
+  // --- Header ---
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    paddingTop: 8,
+  },
+  difficultyText: {
+    fontFamily: 'SpecialElite_400Regular',
+    fontSize: 12,
+    color: '#2A2118',
+    letterSpacing: 1,
+  },
+  headerCenter: {
+    alignItems: 'center',
+  },
+  livesText: {
+    fontSize: 20,
+  },
+  heartFilled: {
+    color: '#A02020',
+    fontSize: 20,
+  },
+  heartLost: {
+    color: '#2A2118',
+    fontSize: 18,
+    opacity: 0.4,
+  },
+  timerStrip: {
+    backgroundColor: '#EDE3D0',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 3,
+    borderWidth: 1,
+    borderColor: '#D4C5A8',
+    borderBottomWidth: 2,
+  },
+  timerText: {
+    fontFamily: 'SpecialElite_400Regular',
+    fontSize: 15,
+    color: '#2A2118',
+    fontVariant: ['tabular-nums'],
+  },
+
+  // --- Grid ---
+  gridWrapper: {
+    alignItems: 'center',
+    paddingVertical: 4,
+  },
+  gridBorder: {
+    position: 'relative',
+    borderWidth: 3,
+    borderColor: '#2A2118',
+    backgroundColor: '#F5EDE0',
+    borderRadius: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  gridRow: {
+    flexDirection: 'row',
+  },
+
+  // --- Selection Info ---
+  selectionInfo: {
+    alignItems: 'center',
+    paddingVertical: 4,
+  },
+  selectionText: {
+    fontFamily: 'Lora_400Regular_Italic',
+    fontSize: 12,
+    color: '#8B7355',
+  },
+
+  // --- Actions ---
+  actionsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+  },
+  actionButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    backgroundColor: '#FDF8F0',
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: '#2A2118',
+    borderBottomWidth: 3,
+    borderBottomColor: '#1A1410',
+    shadowColor: '#2A2118',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 4,
+  },
+  actionButtonActive: {
+    backgroundColor: '#A02020',
+    borderColor: '#7A1515',
+    borderBottomColor: '#5A1010',
+  },
+  actionText: {
+    fontFamily: 'SpecialElite_400Regular',
+    fontSize: 11,
+    color: '#2A2118',
+  },
+  actionTextActive: {
+    color: '#FDF8F0',
+  },
+});

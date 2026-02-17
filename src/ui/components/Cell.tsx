@@ -1,9 +1,8 @@
 import * as Haptics from 'expo-haptics';
 import React from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { SudokuCell as SudokuCellType } from '../../core/types';
 import { useGameStore } from '../../store/GameStore';
-import { cn } from '../../utils/cn';
 
 interface CellProps {
   row: number;
@@ -12,8 +11,7 @@ interface CellProps {
 }
 
 /**
- * Individual Sudoku cell component.
- * Supports selection, highlighting, notes display, and Fast Solve Mode.
+ * Individual Sudoku cell — newsprint styled.
  */
 export function Cell({ row, col, cell }: CellProps) {
   const activeHint = useGameStore((state) => state.activeHint);
@@ -26,6 +24,7 @@ export function Cell({ row, col, cell }: CellProps) {
   );
   const isDrawingMode = useGameStore((state) => state.isDrawingMode);
   const highlightDigit = useGameStore((state) => state.highlightDigit);
+  const pendingDigit = useGameStore((state) => state.pendingDigit);
 
   const isSelected = selectedCell?.row === row && selectedCell?.col === col;
   const isSameRow = selectedCell?.row === row;
@@ -36,6 +35,10 @@ export function Cell({ row, col, cell }: CellProps) {
     : false;
   const isPeer = isSameRow || isSameCol || isSameBox;
 
+  // Pending digit check
+  const isPendingDigit =
+    pendingDigit?.row === row && pendingDigit?.col === col;
+
   // Hint Logic
   const isHintPrimary = activeHint?.primaryCells.some(
     (c) => c.row === row && c.col === col
@@ -43,18 +46,14 @@ export function Cell({ row, col, cell }: CellProps) {
   const isHintSecondary = activeHint?.secondaryCells?.some(
     (c) => c.row === row && c.col === col
   );
-
-  // Placement/Elimination Visualization
   const hintPlacement =
     activeHint?.placement?.row === row && activeHint?.placement?.col === col
       ? activeHint?.placement?.value
       : null;
-
   const hintEliminations = activeHint?.eliminations
     .filter((e) => e.row === row && e.col === col)
     .map((e) => e.value);
 
-  // Check if this cell has the same value as selected cell OR fast solve digit
   const selectedValue = selectedCell
     ? grid[selectedCell.row][selectedCell.col].value
     : null;
@@ -65,53 +64,75 @@ export function Cell({ row, col, cell }: CellProps) {
         ? highlightDigit
         : selectedValue;
   const isSameValue = cell.value !== null && cell.value === highlightValue;
-
-  // Check if this value is incorrect (value doesn't match solution)
+  // Pending digits should NOT show error style (they're not validated yet)
   const isError =
-    cell.value !== null && !cell.isGiven && cell.value !== cell.solutionValue;
-
-  // Check if cell is a valid target for fast solve (empty and not given)
+    cell.value !== null &&
+    !cell.isGiven &&
+    !isPendingDigit &&
+    cell.value !== cell.solutionValue;
   const isFastSolveTarget =
     fastSolveDigit !== null && cell.value === null && !cell.isGiven;
 
-  // Render notes in 3x3 mini-grid
-  const renderNotes = () => {
-    // Specific logic for Single placement hint: Show the value being placed if it's a placement hint?
-    // Or just highlight the cell?
-    // If placement, we might want to emphasize that note.
+  // --- Border logic for thick 3x3 box edges ---
+  const borderRight = col % 3 === 2 && col !== 8 ? 2.5 : 0.5;
+  const borderBottom = row % 3 === 2 && row !== 8 ? 2.5 : 0.5;
 
+  // --- Background color based on state ---
+  let bgColor = '#F5EDE0'; // parchment-100
+  if (isSelected) {
+    bgColor = '#E8D8B8';
+  } else if (isSameValue) {
+    bgColor = '#DDD0B0';
+  } else if (isPeer) {
+    bgColor = '#EDE3D0';
+  }
+  if (isFastSolveTarget) {
+    bgColor = '#EDE3D0';
+  }
+  // Hint overrides
+  if (isHintPrimary) bgColor = '#E8D5A0';
+  if (isHintSecondary) bgColor = '#EDE0C0';
+  if (hintPlacement !== null) bgColor = '#D5E0C0';
+
+  // Render notes
+  const renderNotes = () => {
     if (cell.value !== null) return null;
     if (cell.notes.length === 0 && !hintPlacement) return null;
 
     return (
-      <View className="flex-1 flex-row flex-wrap items-center justify-center p-0.5">
+      <View style={noteStyles.container}>
         {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => {
           const isEliminated = hintEliminations?.includes(num);
           const isPlacement = hintPlacement === num;
           const isNotePresent = cell.notes.includes(num);
 
-          if (!isNotePresent && !isPlacement)
+          if (!isNotePresent && !isPlacement) {
             return (
               <Text
                 key={num}
-                className="w-1/3 text-center text-[9px] leading-[10px] text-transparent"
+                style={[noteStyles.note, { color: 'transparent' }]}
               >
                 {num}
               </Text>
             );
+          }
 
           return (
             <Text
               key={num}
-              className={cn(
-                'w-1/3 text-center text-[9px] leading-[10px]',
-                // Normal note
-                !isEliminated && !isPlacement && 'text-gray-500',
-                // To be eliminated
-                isEliminated && 'font-bold text-red-500 line-through',
-                // To be placed (if showing as note)
-                isPlacement && 'scale-125 font-bold text-green-600'
-              )}
+              style={[
+                noteStyles.note,
+                !isEliminated && !isPlacement && { color: '#8B7355' },
+                isEliminated && {
+                  color: '#A02020',
+                  fontWeight: '700',
+                  textDecorationLine: 'line-through',
+                },
+                isPlacement && {
+                  color: '#3A7A3A',
+                  fontWeight: '700',
+                },
+              ]}
             >
               {num}
             </Text>
@@ -125,22 +146,17 @@ export function Cell({ row, col, cell }: CellProps) {
   const selectCellAction = useGameStore((state) => state.selectCell);
 
   const handlePress = async () => {
-    // Fast Solve Mode
     if (fastSolveDigit !== null) {
-      // If tapping a cell that already has the fast solve digit (and isn't given), erase it
       if (
         cell.value === fastSolveDigit &&
         !cell.isGiven &&
         cell.value !== cell.solutionValue
       ) {
-        // We need to select the cell first to clear it using the existing action
         selectCellAction(row, col);
         clearCell();
         await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         return;
       }
-
-      // If tapping an empty cell, place the digit
       if (cell.value === null && !cell.isGiven) {
         const isCorrect = placeFastSolveDigit(row, col);
         await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -151,48 +167,34 @@ export function Cell({ row, col, cell }: CellProps) {
         }
         return;
       }
-
-      // If tapping anything else, just select it (or ignore? User said "show highlight... in fast solve mode")
-      // Let's allow selection still, so they can see peers etc.
     }
-
-    // Normal behavior: select the cell
     selectCellAction(row, col);
   };
 
   return (
     <Pressable
-      className={cn(
-        'h-[38px] w-[38px] items-center justify-center border-[0.5px] border-gray-300 bg-white',
-        // Selection State
-        isSelected && 'bg-blue-200',
-        !isSelected && isSameValue && 'bg-green-200',
-        !isSelected && !isSameValue && isPeer && 'bg-blue-100',
-
-        // Fast solve target highlight
-        isFastSolveTarget && 'bg-blue-50/70',
-
-        // Hint Highlights (Override others)
-        isHintPrimary && 'bg-amber-200', // Primary cells (e.g. pivot)
-        isHintSecondary && 'bg-amber-100', // Secondary cells (e.g. pincers)
-        hintPlacement !== null && 'bg-green-200', // Placement target
-
-        // Box borders
-        col % 3 === 2 && col !== 8 && 'border-r-2 border-r-gray-700',
-        row % 3 === 2 && row !== 8 && 'border-b-2 border-b-gray-700'
-      )}
+      style={[
+        cellStyles.cell,
+        {
+          backgroundColor: bgColor,
+          borderRightWidth: borderRight,
+          borderBottomWidth: borderBottom,
+          borderRightColor: borderRight > 1 ? '#2A2118' : '#C4B08A',
+          borderBottomColor: borderBottom > 1 ? '#2A2118' : '#C4B08A',
+        },
+      ]}
       onPress={handlePress}
     >
       {cell.value !== null ? (
         <Text
-          className={cn(
-            'text-2xl font-medium',
-            cell.isGiven && 'font-bold text-gray-800',
-            !cell.isGiven && 'text-blue-600',
-            isError && 'text-red-600',
-            // Highlight value if part of hint placement (though usually it's empty if placement)
-            hintPlacement === cell.value && 'font-bold text-green-700'
-          )}
+          style={[
+            cellStyles.value,
+            cell.isGiven && cellStyles.givenValue,
+            !cell.isGiven && cellStyles.userValue,
+            isPendingDigit && cellStyles.pendingValue,
+            isError && cellStyles.errorValue,
+            hintPlacement === cell.value && cellStyles.hintValue,
+          ]}
         >
           {cell.value}
         </Text>
@@ -202,3 +204,56 @@ export function Cell({ row, col, cell }: CellProps) {
     </Pressable>
   );
 }
+
+const cellStyles = StyleSheet.create({
+  cell: {
+    width: 38,
+    height: 38,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 0.5,
+    borderColor: '#C4B08A',
+  },
+  value: {
+    fontSize: 22,
+  },
+  givenValue: {
+    fontFamily: 'PlayfairDisplay_700Bold',
+    color: '#2A2118',
+  },
+  userValue: {
+    fontFamily: 'Caveat_700Bold',
+    fontSize: 26,
+    color: '#4A3828',
+  },
+  pendingValue: {
+    color: '#8B7355',
+    opacity: 0.45,
+  },
+  errorValue: {
+    color: '#A02020',
+  },
+  hintValue: {
+    fontFamily: 'PlayfairDisplay_700Bold',
+    color: '#3A7A3A',
+  },
+});
+
+const noteStyles = StyleSheet.create({
+  container: {
+    flex: 1,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 1,
+  },
+  note: {
+    width: '33%',
+    textAlign: 'center',
+    fontSize: 9,
+    lineHeight: 10,
+    fontFamily: 'Lora_400Regular',
+    color: '#8B7355',
+  },
+});
