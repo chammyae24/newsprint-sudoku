@@ -1,11 +1,10 @@
 import * as Haptics from 'expo-haptics';
 import React from 'react';
-import { Pressable, Text } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useGameStore } from '../../store/GameStore';
-import { cn } from '../../utils/cn';
 
 /**
- * Eraser tool to clear the selected cell's value and notes.
+ * Eraser tool — styled as newspaper eraser icon.
  */
 export function Eraser() {
   const selectedCell = useGameStore((state) => state.selectedCell);
@@ -24,29 +23,60 @@ export function Eraser() {
 
   const handlePress = async () => {
     if (!canErase) return;
-
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     clearCell();
   };
 
   return (
     <Pressable
-      className={cn(
-        'flex-row items-center gap-1.5 rounded-full px-4 py-2.5',
-        canErase ? 'bg-red-50' : 'bg-gray-100 opacity-50'
-      )}
+      style={[styles.button, !canErase && styles.buttonDisabled]}
       onPress={handlePress}
       disabled={!canErase}
     >
-      <Text className="text-base">🗑️</Text>
-      <Text
-        className={cn(
-          'text-sm font-medium',
-          canErase ? 'text-red-600' : 'text-gray-400'
-        )}
-      >
-        Erase
-      </Text>
+      <View style={styles.iconContainer}>
+        <View
+          style={[styles.eraserIcon, !canErase && styles.eraserIconDisabled]}
+        >
+          <Text style={styles.eraserEmoji}>🧽</Text>
+        </View>
+      </View>
     </Pressable>
   );
 }
+
+const styles = StyleSheet.create({
+  button: {
+    alignItems: 'center',
+    padding: 8,
+    minWidth: 64,
+  },
+  buttonDisabled: {
+    opacity: 0.4,
+  },
+  iconContainer: {
+    marginBottom: 4,
+  },
+  eraserIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 8,
+    backgroundColor: '#E8C0A0',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  eraserIconDisabled: {
+    backgroundColor: '#E0D5BF',
+  },
+  eraserEmoji: {
+    fontSize: 20,
+  },
+  label: {
+    fontFamily: 'SpecialElite_400Regular',
+    fontSize: 10,
+    color: '#2A2118',
+    textAlign: 'center',
+  },
+  labelDisabled: {
+    color: '#A89070',
+  },
+});

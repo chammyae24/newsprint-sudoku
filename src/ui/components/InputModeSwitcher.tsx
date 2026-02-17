@@ -1,12 +1,10 @@
 import * as Haptics from 'expo-haptics';
 import React from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { InputMode, useGameStore } from '../../store/GameStore';
-import { cn } from '../../utils/cn';
 
 /**
- * Toggle between Solve and Note input modes.
- * Provides haptic feedback on mode change.
+ * Input mode switcher — Solve Pen / Note Pencil with stamp icons.
  */
 export function InputModeSwitcher() {
   const inputMode = useGameStore((state) => state.inputMode);
@@ -20,42 +18,111 @@ export function InputModeSwitcher() {
   };
 
   return (
-    <View className="flex-row items-center justify-center gap-4 py-3">
+    <View style={styles.container}>
+      {/* Solve Pen */}
       <Pressable
-        className={cn(
-          'flex-row items-center gap-2 rounded-3xl px-5 py-2.5',
-          inputMode === 'solve' ? 'bg-blue-800' : 'bg-gray-100'
-        )}
+        style={[
+          styles.modeButton,
+          inputMode === 'solve' && styles.modeButtonActive,
+        ]}
         onPress={() => handleModeChange('solve')}
       >
-        <Text className="text-lg">✏️</Text>
+        {/* Ink stamp icon representation */}
+        <View style={styles.iconContainer}>
+          <View
+            style={[
+              styles.stampIcon,
+              inputMode === 'solve' && styles.stampIconActive,
+            ]}
+          >
+            <Text style={styles.stampIconText}>✒️</Text>
+          </View>
+        </View>
         <Text
-          className={cn(
-            'text-sm font-medium',
-            inputMode === 'solve' ? 'text-white' : 'text-gray-600'
-          )}
+          style={[
+            styles.modeLabel,
+            inputMode === 'solve' && styles.modeLabelActive,
+          ]}
         >
-          Solve
+          SOLVE{'\n'}PEN
         </Text>
       </Pressable>
 
+      {/* Note Pencil */}
       <Pressable
-        className={cn(
-          'flex-row items-center gap-2 rounded-3xl px-5 py-2.5',
-          inputMode === 'note' ? 'bg-blue-800' : 'bg-gray-100'
-        )}
+        style={[
+          styles.modeButton,
+          inputMode === 'note' && styles.modeButtonActive,
+        ]}
         onPress={() => handleModeChange('note')}
       >
-        <Text className="text-lg">📝</Text>
+        <View style={styles.iconContainer}>
+          <View
+            style={[
+              styles.stampIcon,
+              inputMode === 'note' && styles.stampIconActive,
+            ]}
+          >
+            <Text style={styles.stampIconText}>📝</Text>
+          </View>
+        </View>
         <Text
-          className={cn(
-            'text-sm font-medium',
-            inputMode === 'note' ? 'text-white' : 'text-gray-600'
-          )}
+          style={[
+            styles.modeLabel,
+            inputMode === 'note' && styles.modeLabelActive,
+          ]}
         >
-          Notes
+          NOTE{'\n'}PENCIL
         </Text>
       </Pressable>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 16,
+    paddingVertical: 8,
+  },
+  modeButton: {
+    alignItems: 'center',
+    padding: 8,
+    borderRadius: 8,
+    minWidth: 72,
+    opacity: 0.6,
+  },
+  modeButtonActive: {
+    opacity: 1,
+    backgroundColor: 'rgba(42, 33, 24, 0.08)',
+  },
+  iconContainer: {
+    marginBottom: 4,
+  },
+  stampIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 8,
+    backgroundColor: '#D4C5A8',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stampIconActive: {
+    backgroundColor: '#4A3828',
+  },
+  stampIconText: {
+    fontSize: 20,
+  },
+  modeLabel: {
+    fontFamily: 'SpecialElite_400Regular',
+    fontSize: 10,
+    color: '#8B7355',
+    textAlign: 'center',
+    lineHeight: 13,
+  },
+  modeLabelActive: {
+    color: '#2A2118',
+    fontWeight: '700',
+  },
+});

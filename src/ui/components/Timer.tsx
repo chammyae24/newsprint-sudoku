@@ -1,9 +1,9 @@
 import React, { useEffect, useRef } from 'react';
-import { StyleSheet, Text, TouchableOpacity } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useGameStore } from '../../store/GameStore';
 
 /**
- * Timer component that displays elapsed time and allows pause/resume.
+ * Timer component — torn paper strip style.
  */
 export const Timer: React.FC = () => {
   const {
@@ -17,14 +17,12 @@ export const Timer: React.FC = () => {
   } = useGameStore();
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Format time as MM:SS
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Start/stop timer based on game state
   useEffect(() => {
     if (isGameOver || isGameWon) {
       if (intervalRef.current) {
@@ -57,32 +55,48 @@ export const Timer: React.FC = () => {
   };
 
   return (
-    <TouchableOpacity onPress={handleTogglePause} style={styles.container}>
-      <Text style={styles.icon}>{isPaused ? '▶️' : '⏸️'}</Text>
-      <Text style={styles.time}>{formatTime(elapsedSeconds)}</Text>
-    </TouchableOpacity>
+    <Pressable onPress={handleTogglePause} style={styles.container}>
+      <View style={styles.strip}>
+        <Text style={styles.icon}>{isPaused ? '▶' : '⏸'}</Text>
+        <Text style={styles.time}>{formatTime(elapsedSeconds)}</Text>
+      </View>
+    </Pressable>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
+    alignItems: 'center',
+  },
+  strip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 12,
+    gap: 6,
+    paddingHorizontal: 14,
     paddingVertical: 6,
-    backgroundColor: 'rgba(0, 0, 0, 0.05)',
-    borderRadius: 8,
+    backgroundColor: '#EDE3D0',
+    borderRadius: 3,
+    borderWidth: 1,
+    borderColor: '#D4C5A8',
+    // Torn paper effect
+    borderTopWidth: 1.5,
+    borderBottomWidth: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
   icon: {
-    fontSize: 16,
+    fontSize: 12,
+    color: '#8B7355',
   },
   time: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '600',
     fontVariant: ['tabular-nums'],
-    color: '#2A2A2A',
-    fontFamily: 'System',
+    color: '#2A2118',
+    fontFamily: 'SpecialElite_400Regular',
   },
 });
 

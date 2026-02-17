@@ -178,8 +178,7 @@ function SvgDrawingCanvas({
   return (
     <View
       ref={containerRef}
-      className="overflow-hidden rounded-lg border-2 border-gray-200 bg-white"
-      style={{ width: size, height: size }}
+      style={[canvasStyles.container, { width: size, height: size }]}
       {...panResponder.panHandlers}
     >
       <Svg width={size} height={size} style={StyleSheet.absoluteFill}>
@@ -297,10 +296,7 @@ function SkiaDrawingCanvas({
 
   return (
     <GestureDetector gesture={panGesture}>
-      <Canvas
-        className="overflow-hidden rounded-lg border-2 border-gray-200 bg-white"
-        style={{ width: size, height: size }}
-      >
+      <Canvas style={[canvasStyles.container, { width: size, height: size }]}>
         {/* Render completed paths */}
         {paths.map((path, index) => {
           const skiaPath = createSkiaPath(path.points);
@@ -324,3 +320,13 @@ function SkiaDrawingCanvas({
     </GestureDetector>
   );
 }
+
+const canvasStyles = StyleSheet.create({
+  container: {
+    overflow: 'hidden',
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: '#D4C5A8',
+    backgroundColor: '#FDF8F0',
+  },
+});

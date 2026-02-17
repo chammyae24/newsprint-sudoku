@@ -62,8 +62,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   noteText: {
-    color: '#666666',
-    fontFamily: 'System',
+    color: '#8B7355',
+    fontFamily: 'Lora_400Regular',
     fontWeight: '400',
   },
 });

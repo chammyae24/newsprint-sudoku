@@ -18,17 +18,17 @@ interface WinModalProps {
 }
 
 const CONFETTI_COLORS = [
-  '#FFD700',
-  '#FF6B6B',
-  '#4ECDC4',
-  '#45B7D1',
-  '#96CEB4',
-  '#FFEAA7',
+  '#B09A6E',
+  '#A02020',
+  '#8B7355',
+  '#D4C5A8',
+  '#6B5540',
+  '#C4B08A',
 ];
 const CONFETTI_COUNT = 50;
 
 /**
- * Victory modal with confetti animation.
+ * Victory modal — "EXTRA EXTRA" newspaper headline style.
  */
 export const WinModal: React.FC<WinModalProps> = ({
   visible,
@@ -50,7 +50,6 @@ export const WinModal: React.FC<WinModalProps> = ({
 
   useEffect(() => {
     if (visible) {
-      // Scale in the modal
       Animated.spring(scaleAnim, {
         toValue: 1,
         tension: 100,
@@ -58,8 +57,7 @@ export const WinModal: React.FC<WinModalProps> = ({
         useNativeDriver: true,
       }).start();
 
-      // Animate confetti
-      confettiAnims.forEach((anim, i) => {
+      confettiAnims.forEach((anim) => {
         anim.translateY.setValue(-50);
         anim.opacity.setValue(1);
 
@@ -132,20 +130,25 @@ export const WinModal: React.FC<WinModalProps> = ({
           <Animated.View
             style={[styles.modalContent, { transform: [{ scale: scaleAnim }] }]}
           >
-            <Text style={styles.emoji}>🎉</Text>
-            <Text style={styles.title}>You Won!</Text>
-            <Text style={styles.subtitle}>Congratulations!</Text>
-            <Text style={styles.time}>Time: {formatTime(elapsedSeconds)}</Text>
+            <Text style={styles.extraExtra}>EXTRA! EXTRA!</Text>
+            <View style={styles.headline}>
+              <Text style={styles.headlineText}>PUZZLE SOLVED!</Text>
+            </View>
+            <Text style={styles.subtitle}>
+              Completed in {formatTime(elapsedSeconds)}
+            </Text>
+
+            <View style={styles.divider} />
 
             <View style={styles.buttons}>
               <Pressable style={styles.statsButton} onPress={onShowStats}>
                 <Text style={styles.statsButtonText}>📊 View Stats</Text>
               </Pressable>
               <Pressable style={styles.primaryButton} onPress={onNewGame}>
-                <Text style={styles.primaryButtonText}>New Game</Text>
+                <Text style={styles.primaryButtonText}>New Puzzle</Text>
               </Pressable>
               <Pressable style={styles.secondaryButton} onPress={onGoHome}>
-                <Text style={styles.secondaryButtonText}>Go Home</Text>
+                <Text style={styles.secondaryButtonText}>Return Home</Text>
               </Pressable>
             </View>
           </Animated.View>
@@ -158,7 +161,7 @@ export const WinModal: React.FC<WinModalProps> = ({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    backgroundColor: 'rgba(26, 20, 16, 0.7)',
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
@@ -171,77 +174,95 @@ const styles = StyleSheet.create({
     top: -50,
   },
   modalContent: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 24,
+    backgroundColor: '#F5EDE0',
+    borderRadius: 8,
     paddingHorizontal: 40,
     paddingVertical: 32,
     alignItems: 'center',
+    borderWidth: 3,
+    borderColor: '#2A2118',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.3,
     shadowRadius: 20,
     elevation: 20,
+    maxWidth: 340,
   },
-  emoji: {
-    fontSize: 64,
-    marginBottom: 16,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: '700',
-    color: '#1F2937',
+  extraExtra: {
+    fontFamily: 'SpecialElite_400Regular',
+    fontSize: 16,
+    color: '#A02020',
+    letterSpacing: 4,
     marginBottom: 8,
+  },
+  headline: {
+    borderTopWidth: 3,
+    borderBottomWidth: 3,
+    borderColor: '#2A2118',
+    paddingVertical: 8,
+    marginBottom: 12,
+    width: '100%',
+    alignItems: 'center',
+  },
+  headlineText: {
+    fontFamily: 'PlayfairDisplay_900Black',
+    fontSize: 28,
+    color: '#2A2118',
+    textAlign: 'center',
   },
   subtitle: {
-    fontSize: 18,
-    color: '#6B7280',
+    fontFamily: 'Lora_400Regular_Italic',
+    fontSize: 15,
+    color: '#8B7355',
     marginBottom: 8,
   },
-  time: {
-    fontSize: 16,
-    color: '#10B981',
-    fontWeight: '600',
-    marginBottom: 24,
+  divider: {
+    width: '80%',
+    height: 1,
+    backgroundColor: '#C4B08A',
+    marginVertical: 16,
   },
   buttons: {
-    gap: 12,
+    gap: 10,
     width: '100%',
   },
   primaryButton: {
-    backgroundColor: '#10B981',
+    backgroundColor: '#4A3828',
     paddingVertical: 14,
     paddingHorizontal: 32,
-    borderRadius: 12,
+    borderRadius: 6,
     alignItems: 'center',
   },
   primaryButtonText: {
-    color: '#FFFFFF',
+    fontFamily: 'PlayfairDisplay_700Bold',
+    color: '#F5EDE0',
     fontSize: 16,
-    fontWeight: '600',
   },
   secondaryButton: {
-    backgroundColor: '#F3F4F6',
+    backgroundColor: '#EDE3D0',
     paddingVertical: 14,
     paddingHorizontal: 32,
-    borderRadius: 12,
+    borderRadius: 6,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#D4C5A8',
   },
   secondaryButtonText: {
-    color: '#6B7280',
+    fontFamily: 'Lora_400Regular',
+    color: '#8B7355',
     fontSize: 16,
-    fontWeight: '500',
   },
   statsButton: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#6B5540',
     paddingVertical: 14,
     paddingHorizontal: 32,
-    borderRadius: 12,
+    borderRadius: 6,
     alignItems: 'center',
   },
   statsButtonText: {
-    color: '#FFFFFF',
+    fontFamily: 'PlayfairDisplay_700Bold',
+    color: '#F5EDE0',
     fontSize: 16,
-    fontWeight: '600',
   },
 });
 
