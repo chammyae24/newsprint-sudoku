@@ -12,11 +12,11 @@ import { LevelSelector } from '../src/ui/components/LevelSelector';
 
 // --- Ransom-note title letter data ---
 const TITLE_LINE1 = [
-  { char: 'N', bg: '#2A2118', color: '#F5EDE0', rotate: '-2deg', size: 58 },
+  { char: 'N', bg: '#edb942ff', color: '#2e1c00ff', rotate: '-2deg', size: 58 },
   { char: 'E', bg: '#D4C5A8', color: '#2A2118', rotate: '1deg', size: 50 },
   { char: 'W', bg: '#FDF8F0', color: '#2A2118', rotate: '-1deg', size: 52 },
   { char: 'S', bg: '#E0D5BF', color: '#3A2A1C', rotate: '2deg', size: 48 },
-  { char: 'P', bg: '#2A2118', color: '#F5EDE0', rotate: '-3deg', size: 54 },
+  { char: 'P', bg: '#2A2118', color: '#ffffffff', rotate: '-3deg', size: 54 },
   { char: 'R', bg: '#FDF8F0', color: '#2A2118', rotate: '1deg', size: 46 },
   { char: 'I', bg: '#4A3828', color: '#F5EDE0', rotate: '-1deg', size: 50 },
   { char: 'N', bg: '#D4C5A8', color: '#2A2118', rotate: '2deg', size: 48 },
@@ -27,7 +27,7 @@ const TITLE_LINE2 = [
   { char: 'S', bg: '#E0D5BF', color: '#2A2118', rotate: '2deg', size: 54 },
   { char: 'U', bg: '#2A2118', color: '#F5EDE0', rotate: '-1deg', size: 50 },
   { char: 'D', bg: '#FDF8F0', color: '#2A2118', rotate: '1deg', size: 56 },
-  { char: 'O', bg: '#D4C5A8', color: '#3A2A1C', rotate: '-2deg', size: 48 },
+  { char: 'O', bg: '#edb942ff', color: '#3A2A1C', rotate: '-2deg', size: 48 },
   { char: 'K', bg: '#4A3828', color: '#F5EDE0', rotate: '3deg', size: 54 },
   { char: 'U', bg: '#FDF8F0', color: '#2A2118', rotate: '-1deg', size: 50 },
 ];
@@ -235,10 +235,10 @@ const styles = StyleSheet.create({
   ransomLetter: {
     borderRadius: 2,
     shadowColor: '#000',
-    shadowOffset: { width: 1, height: 1 },
-    shadowOpacity: 0.15,
-    shadowRadius: 2,
-    elevation: 2,
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 0.5,
+    shadowRadius: 4,
+    elevation: 4,
   },
 
   // --- Menu Buttons ---

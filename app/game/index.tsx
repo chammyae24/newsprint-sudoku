@@ -175,30 +175,26 @@ export default function GameScreen() {
           DIFFICULTY: {DIFFICULTY_LABELS[difficulty] || difficulty}
         </Text>
         <View style={styles.headerCenter}>
-          <Text style={styles.livesText}>
-            {hearts.map((h, i) => (
-              <Text
-                key={i}
-                style={
-                  i < remainingLives ? styles.heartFilled : styles.heartLost
-                }
-              >
-                {h}{' '}
-              </Text>
-            ))}
-          </Text>
+          <View style={styles.timerStrip}>
+            <Text style={styles.timerText}>⏱️ {formatTime(elapsedSeconds)}</Text>
+          </View>
         </View>
-        <View style={styles.timerStrip}>
-          <Text style={styles.timerText}>⏱️ {formatTime(elapsedSeconds)}</Text>
-        </View>
-      </View>
-
-      {/* Status line */}
-      <View style={styles.statusLine}>
-        <Text style={styles.statusText}>
-          {inputMode === 'solve' ? '✒️ Solve Mode' : '📝 Notes Mode'}
+        <Text style={styles.livesText}>
+          {hearts.map((h, i) => (
+            <Text
+              key={i}
+              style={
+                i < remainingLives ? styles.heartFilled : styles.heartLost
+              }
+            >
+              {h}{' '}
+            </Text>
+          ))}
         </Text>
       </View>
+
+      {/* Input Mode Switcher */}
+      <InputModeSwitcher />
 
       {/* Grid */}
       <View style={styles.gridWrapper}>
@@ -235,8 +231,7 @@ export default function GameScreen() {
         )}
       </View>
 
-      {/* Input Mode Switcher */}
-      <InputModeSwitcher />
+
 
       {/* Keypad */}
       <Keypad />
@@ -317,7 +312,7 @@ export default function GameScreen() {
 
       {/* Lose Modal */}
       <LoseModal
-        visible={isGameOver && !isGameWon && !showStats}
+        visible={isGameOver && !isGameWon && !showStats && !showLevelSelector}
         onNewGame={handleNewGame}
         onGoHome={handleGoHome}
         onShowStats={() => setShowStats(true)}
@@ -388,21 +383,10 @@ const styles = StyleSheet.create({
     fontVariant: ['tabular-nums'],
   },
 
-  // --- Status ---
-  statusLine: {
-    alignItems: 'center',
-    paddingVertical: 2,
-  },
-  statusText: {
-    fontFamily: 'Lora_400Regular_Italic',
-    fontSize: 12,
-    color: '#8B7355',
-  },
-
   // --- Grid ---
   gridWrapper: {
     alignItems: 'center',
-    paddingVertical: 8,
+    paddingVertical: 4,
   },
   gridBorder: {
     position: 'relative',
