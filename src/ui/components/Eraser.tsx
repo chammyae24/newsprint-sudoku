@@ -10,21 +10,35 @@ export function Eraser() {
   const selectedCell = useGameStore((state) => state.selectedCell);
   const grid = useGameStore((state) => state.grid);
   const clearCell = useGameStore((state) => state.clearCell);
+  const pendingDigit = useGameStore((state) => state.pendingDigit);
+  const cancelPendingDigit = useGameStore((state) => state.cancelPendingDigit);
+
+  const isPendingSelected =
+    selectedCell &&
+    pendingDigit &&
+    pendingDigit.row === selectedCell.row &&
+    pendingDigit.col === selectedCell.col;
 
   const canErase = React.useMemo(() => {
     if (!selectedCell) return false;
+    // Always allow erasing pending digits
+    if (isPendingSelected) return true;
     const cell = grid[selectedCell.row][selectedCell.col];
     return (
       !cell.isGiven &&
       ((cell.value !== null && cell.value !== cell.solutionValue) ||
         cell.notes.length > 0)
     );
-  }, [selectedCell, grid]);
+  }, [selectedCell, grid, isPendingSelected]);
 
   const handlePress = async () => {
     if (!canErase) return;
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    clearCell();
+    if (isPendingSelected) {
+      cancelPendingDigit();
+    } else {
+      clearCell();
+    }
   };
 
   return (

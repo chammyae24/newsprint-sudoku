@@ -24,6 +24,7 @@ export function Cell({ row, col, cell }: CellProps) {
   );
   const isDrawingMode = useGameStore((state) => state.isDrawingMode);
   const highlightDigit = useGameStore((state) => state.highlightDigit);
+  const pendingDigit = useGameStore((state) => state.pendingDigit);
 
   const isSelected = selectedCell?.row === row && selectedCell?.col === col;
   const isSameRow = selectedCell?.row === row;
@@ -33,6 +34,10 @@ export function Cell({ row, col, cell }: CellProps) {
       Math.floor(selectedCell.col / 3) === Math.floor(col / 3)
     : false;
   const isPeer = isSameRow || isSameCol || isSameBox;
+
+  // Pending digit check
+  const isPendingDigit =
+    pendingDigit?.row === row && pendingDigit?.col === col;
 
   // Hint Logic
   const isHintPrimary = activeHint?.primaryCells.some(
@@ -59,8 +64,12 @@ export function Cell({ row, col, cell }: CellProps) {
         ? highlightDigit
         : selectedValue;
   const isSameValue = cell.value !== null && cell.value === highlightValue;
+  // Pending digits should NOT show error style (they're not validated yet)
   const isError =
-    cell.value !== null && !cell.isGiven && cell.value !== cell.solutionValue;
+    cell.value !== null &&
+    !cell.isGiven &&
+    !isPendingDigit &&
+    cell.value !== cell.solutionValue;
   const isFastSolveTarget =
     fastSolveDigit !== null && cell.value === null && !cell.isGiven;
 
@@ -182,6 +191,7 @@ export function Cell({ row, col, cell }: CellProps) {
             cellStyles.value,
             cell.isGiven && cellStyles.givenValue,
             !cell.isGiven && cellStyles.userValue,
+            isPendingDigit && cellStyles.pendingValue,
             isError && cellStyles.errorValue,
             hintPlacement === cell.value && cellStyles.hintValue,
           ]}
@@ -212,8 +222,13 @@ const cellStyles = StyleSheet.create({
     color: '#2A2118',
   },
   userValue: {
-    fontFamily: 'Lora_400Regular',
+    fontFamily: 'Caveat_700Bold',
+    fontSize: 26,
     color: '#4A3828',
+  },
+  pendingValue: {
+    color: '#8B7355',
+    opacity: 0.45,
   },
   errorValue: {
     color: '#A02020',

@@ -1,11 +1,11 @@
 import * as Haptics from 'expo-haptics';
 import React, { useRef, useState } from 'react';
 import {
-  GestureResponderEvent,
-  PanResponder,
-  StyleSheet,
-  Text,
-  View,
+    GestureResponderEvent,
+    PanResponder,
+    StyleSheet,
+    Text,
+    View,
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { recognizeDigitJS } from '../../recognition';
@@ -33,7 +33,7 @@ export function BoardDrawingOverlay({
 }: BoardDrawingOverlayProps) {
   const grid = useGameStore((state) => state.grid);
   const inputMode = useGameStore((state) => state.inputMode);
-  const setCellValue = useGameStore((state) => state.setCellValue);
+  const setPendingDigit = useGameStore((state) => state.setPendingDigit);
   const toggleNote = useGameStore((state) => state.toggleNote);
   const selectCell = useGameStore((state) => state.selectCell);
 
@@ -191,11 +191,8 @@ export function BoardDrawingOverlay({
     selectCell(row, col);
 
     if (inputMode === 'solve') {
-      const isCorrect = setCellValue(digit);
+      setPendingDigit(row, col, digit);
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      if (!isCorrect) {
-        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      }
     } else {
       toggleNote(digit);
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);

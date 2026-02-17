@@ -1,3 +1,4 @@
+import { Caveat_700Bold } from '@expo-google-fonts/caveat';
 import {
     Lora_400Regular,
     Lora_400Regular_Italic,
@@ -27,6 +28,7 @@ export default function RootLayout() {
     Lora_400Regular_Italic,
     Lora_700Bold,
     SpecialElite_400Regular,
+    Caveat_700Bold,
   });
 
   useEffect(() => {

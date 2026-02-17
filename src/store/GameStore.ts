@@ -22,6 +22,12 @@ interface UndoableState {
   isGameWon: boolean;
 }
 
+export interface PendingDigit {
+  row: number;
+  col: number;
+  value: number;
+}
+
 interface GameState {
   // Puzzle data
   grid: SudokuCell[][];
@@ -44,6 +50,9 @@ interface GameState {
   isPencilDetected: boolean;
   isDrawingMode: boolean;
   highlightDigit: number | null; // For highlighting in draw mode
+
+  // Pending digit from handwriting (not yet validated)
+  pendingDigit: PendingDigit | null;
 
   // Fast Solve Mode
   isFastSolveMode: boolean;
@@ -88,6 +97,11 @@ interface GameActions {
   setHandwritingEnabled: (enabled: boolean) => void;
   setPencilDetected: (detected: boolean) => void;
   toggleDrawingMode: () => void;
+
+  // Pending digit (handwriting confirmation)
+  setPendingDigit: (row: number, col: number, value: number) => void;
+  confirmPendingDigit: () => void;
+  cancelPendingDigit: () => void;
 
   // Undo/Redo
   undo: () => void;
@@ -137,6 +151,7 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
   isPencilDetected: false,
   isDrawingMode: false,
   highlightDigit: null,
+  pendingDigit: null,
   isFastSolveMode: false,
   fastSolveDigit: null,
   undoStack: [],
@@ -165,6 +180,7 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
       isGameWon: false,
       elapsedSeconds: 0,
       isPaused: false,
+      pendingDigit: null,
       undoStack: [],
       redoStack: [],
       moveHistory: [],
@@ -189,6 +205,7 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
       isGameWon: false,
       elapsedSeconds: 0,
       isPaused: false,
+      pendingDigit: null,
       undoStack: [],
       redoStack: [],
       moveHistory: [],
@@ -206,6 +223,7 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
       isGameWon: savedState.isGameWon,
       elapsedSeconds: savedState.elapsedSeconds,
       isPaused: false,
+      pendingDigit: null,
       undoStack: [],
       redoStack: [],
       moveHistory: savedState.moveHistory || [],
@@ -213,6 +231,13 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
   },
 
   selectCell: (row: number, col: number) => {
+    const { pendingDigit } = get();
+
+    // Auto-confirm any pending digit when selecting a different cell
+    if (pendingDigit && (pendingDigit.row !== row || pendingDigit.col !== col)) {
+      get().confirmPendingDigit();
+    }
+
     set({ selectedCell: { row, col } });
   },
 
@@ -375,7 +400,7 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
   },
 
   clearCell: () => {
-    const { selectedCell, grid, isGameOver } = get();
+    const { selectedCell, grid, isGameOver, pendingDigit } = get();
 
     if (!selectedCell || isGameOver) return;
 
@@ -383,6 +408,12 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
     const cell = grid[row][col];
 
     if (cell.isGiven) return;
+
+    // If the selected cell has a pending digit, cancel it penalty-free
+    if (pendingDigit && pendingDigit.row === row && pendingDigit.col === col) {
+      get().cancelPendingDigit();
+      return;
+    }
 
     set((state) => {
       const newGrid = state.grid.map((r, ri) =>
@@ -414,6 +445,138 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
 
   setPencilDetected: (detected: boolean) => {
     set({ isPencilDetected: detected });
+  },
+
+  // Pending digit actions (for handwriting confirmation)
+  setPendingDigit: (row: number, col: number, value: number) => {
+    const { pendingDigit, grid } = get();
+
+    // If there's already a pending digit on a different cell, confirm it first
+    if (pendingDigit && (pendingDigit.row !== row || pendingDigit.col !== col)) {
+      get().confirmPendingDigit();
+    }
+
+    // Place the digit visually in the grid without validating
+    set((state) => {
+      const newGrid = state.grid.map((r, ri) =>
+        r.map((c, ci) => {
+          if (ri === row && ci === col) {
+            return {
+              ...c,
+              value: value,
+              notes: [], // Clear notes when setting value
+            };
+          }
+          return c;
+        })
+      );
+
+      return {
+        grid: newGrid,
+        pendingDigit: { row, col, value },
+        selectedCell: { row, col },
+      };
+    });
+
+    // If the board is now fully filled (last cell), auto-confirm immediately
+    const updatedGrid = get().grid;
+    const allFilled = updatedGrid.every((r) =>
+      r.every((c) => c.value !== null)
+    );
+    if (allFilled) {
+      get().confirmPendingDigit();
+    }
+  },
+
+  confirmPendingDigit: () => {
+    const { pendingDigit, grid, maxMistakes } = get();
+    if (!pendingDigit) return;
+
+    const { row, col, value } = pendingDigit;
+    const cell = grid[row][col];
+    const isCorrect = cell.solutionValue === value;
+
+    set((state) => {
+      // Detect technique used (based on the state BEFORE the move)
+      const techniqueResult = isCorrect
+        ? TechniqueDetector.detectWithDetails(state.grid, row, col, value)
+        : undefined;
+
+      // Remove value from peer notes if correct
+      const newGrid = isCorrect
+        ? state.grid.map((r, ri) =>
+            r.map((c, ci) => {
+              const isPeer =
+                (ri === row ||
+                  ci === col ||
+                  (Math.floor(ri / 3) === Math.floor(row / 3) &&
+                    Math.floor(ci / 3) === Math.floor(col / 3))) &&
+                !(ri === row && ci === col);
+
+              if (isPeer && c.notes.includes(value)) {
+                return {
+                  ...c,
+                  notes: c.notes.filter((n) => n !== value),
+                };
+              }
+              return c;
+            })
+          )
+        : state.grid;
+
+      const newMistakes = isCorrect ? state.mistakes : state.mistakes + 1;
+      const newIsGameOver = newMistakes >= maxMistakes;
+
+      // Check for win
+      const isWon = newGrid.every((row) =>
+        row.every((cell) => cell.value === cell.solutionValue)
+      );
+
+      return {
+        grid: newGrid,
+        pendingDigit: null,
+        mistakes: newMistakes,
+        isGameOver: newIsGameOver,
+        isGameWon: isWon,
+        moveHistory: [
+          ...state.moveHistory,
+          {
+            row,
+            col,
+            value,
+            timestamp: Date.now(),
+            wasCorrect: isCorrect,
+            technique: techniqueResult?.technique,
+            techniqueExplanation: techniqueResult?.explanation,
+            techniquePrimaryCells: techniqueResult?.primaryCells,
+          },
+        ],
+      };
+    });
+  },
+
+  cancelPendingDigit: () => {
+    const { pendingDigit } = get();
+    if (!pendingDigit) return;
+
+    const { row, col } = pendingDigit;
+
+    // Remove the digit from the grid — no penalty
+    set((state) => {
+      const newGrid = state.grid.map((r, ri) =>
+        r.map((c, ci) => {
+          if (ri === row && ci === col) {
+            return { ...c, value: null };
+          }
+          return c;
+        })
+      );
+
+      return {
+        grid: newGrid,
+        pendingDigit: null,
+      };
+    });
   },
 
   toggleDrawingMode: () => {
