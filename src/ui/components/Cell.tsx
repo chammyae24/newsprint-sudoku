@@ -36,8 +36,7 @@ export function Cell({ row, col, cell }: CellProps) {
   const isPeer = isSameRow || isSameCol || isSameBox;
 
   // Pending digit check
-  const isPendingDigit =
-    pendingDigit?.row === row && pendingDigit?.col === col;
+  const isPendingDigit = pendingDigit?.row === row && pendingDigit?.col === col;
 
   // Hint Logic
   const isHintPrimary = activeHint?.primaryCells.some(
@@ -216,14 +215,18 @@ const cellStyles = StyleSheet.create({
   },
   value: {
     fontSize: 22,
+    lineHeight: 34,
+    textAlignVertical: 'center',
+    includeFontPadding: false,
   },
   givenValue: {
     fontFamily: 'PlayfairDisplay_700Bold',
     color: '#2A2118',
   },
   userValue: {
-    fontFamily: 'Caveat_700Bold',
-    fontSize: 26,
+    fontFamily: 'GloriaHallelujah_400Regular',
+    fontSize: 20,
+    lineHeight: 30,
     color: '#4A3828',
   },
   pendingValue: {
