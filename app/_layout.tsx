@@ -1,13 +1,13 @@
-import { Caveat_700Bold } from '@expo-google-fonts/caveat';
+import { GloriaHallelujah_400Regular } from '@expo-google-fonts/gloria-hallelujah';
 import {
-    Lora_400Regular,
-    Lora_400Regular_Italic,
-    Lora_700Bold,
+  Lora_400Regular,
+  Lora_400Regular_Italic,
+  Lora_700Bold,
 } from '@expo-google-fonts/lora';
 import {
-    PlayfairDisplay_400Regular,
-    PlayfairDisplay_700Bold,
-    PlayfairDisplay_900Black,
+  PlayfairDisplay_400Regular,
+  PlayfairDisplay_700Bold,
+  PlayfairDisplay_900Black,
 } from '@expo-google-fonts/playfair-display';
 import { SpecialElite_400Regular } from '@expo-google-fonts/special-elite';
 import { useFonts } from 'expo-font';
@@ -28,7 +28,7 @@ export default function RootLayout() {
     Lora_400Regular_Italic,
     Lora_700Bold,
     SpecialElite_400Regular,
-    Caveat_700Bold,
+    GloriaHallelujah_400Regular,
   });
 
   useEffect(() => {
