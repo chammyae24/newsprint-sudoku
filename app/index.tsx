@@ -4,6 +4,10 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { Difficulty } from '../src/core/types';
 import {
+  getDailyStateAsync,
+  getDailyStreakAsync,
+} from '../src/storage/dailyStorage';
+import {
   hasSavedGameAsync,
   loadGameStateAsync,
 } from '../src/storage/gameStorage';
@@ -79,6 +83,12 @@ export default function HomeScreen() {
   const [hasSaved, setHasSaved] = useState(false);
   const [showLevelSelector, setShowLevelSelector] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [dailyCompleted, setDailyCompleted] = useState(false);
+  const [dailyStreak, setDailyStreak] = useState(0);
+
+  const startDailyChallenge = useGameStore(
+    (state) => state.startDailyChallenge
+  );
 
   useFocusEffect(
     useCallback(() => {
@@ -86,8 +96,22 @@ export default function HomeScreen() {
         setHasSaved(has);
         setIsLoading(false);
       });
+      getDailyStateAsync().then((state) => {
+        if (state && state.completed) {
+          setDailyCompleted(true);
+        } else {
+          setDailyCompleted(false);
+        }
+      });
+      getDailyStreakAsync().then((streak) => setDailyStreak(streak));
     }, [])
   );
+
+  const handleDailyChallenge = () => {
+    startDailyChallenge();
+    setHasSaved(false); // Daily challenge overwrites current session if any (or we could save it separately, but keeping simple for now)
+    router.push('/game');
+  };
 
   const handleStartOrResume = async () => {
     if (hasSaved) {
@@ -136,6 +160,42 @@ export default function HomeScreen() {
 
         {/* Menu Buttons */}
         <View style={styles.menuContainer}>
+          {/* Daily Challenge Button */}
+          <Pressable
+            onPress={handleDailyChallenge}
+            style={({ pressed }) => [
+              styles.tornPaperButton,
+              styles.dailyChallengeButton,
+              pressed && styles.tornPaperButtonPressed,
+            ]}
+          >
+            <View style={styles.postalStamp}>
+              <Text style={styles.postalStampText}>DAILY</Text>
+            </View>
+            <View>
+              <Text style={styles.buttonTitle}>TODAY'S PUZZLE</Text>
+              <Text style={styles.buttonSubtitle}>
+                {dailyCompleted
+                  ? '✅ Completed'
+                  : new Date().toLocaleDateString('en-US', {
+                      weekday: 'long',
+                      month: 'short',
+                      day: 'numeric',
+                    })}
+              </Text>
+              {dailyStreak > 0 && (
+                <Text
+                  style={[
+                    styles.buttonSubtitle,
+                    { color: '#A02020', fontWeight: 'bold' },
+                  ]}
+                >
+                  🔥 {dailyStreak} Day Streak
+                </Text>
+              )}
+            </View>
+          </Pressable>
+
           {/* New Puzzle / Resume Button */}
           <Pressable
             onPress={handleStartOrResume}
@@ -165,6 +225,29 @@ export default function HomeScreen() {
               <Text style={styles.buttonTitle}>NEW GAME</Text>
             </Pressable>
           )}
+
+          {/* Stats Button */}
+          <Pressable
+            onPress={() => router.push('/stats' as any)}
+            style={({ pressed }) => [
+              styles.tornPaperButton,
+              pressed && styles.tornPaperButtonPressed,
+            ]}
+          >
+            <Text style={styles.buttonTitle}>STATS</Text>
+          </Pressable>
+
+          {/* Settings Button */}
+          <Pressable
+            onPress={() => router.push('/settings' as any)}
+            style={({ pressed }) => [
+              styles.tornPaperButton,
+              styles.settingsButton,
+              pressed && styles.tornPaperButtonPressed,
+            ]}
+          >
+            <Text style={styles.buttonTitle}>SETTINGS</Text>
+          </Pressable>
         </View>
       </ScrollView>
 

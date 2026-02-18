@@ -5,6 +5,7 @@ import { TechniqueDetector } from '../core/TechniqueDetector';
 import type { MoveRecord, SudokuCell, TechniqueResult } from '../core/types';
 import { Difficulty, TechniqueType } from '../core/types';
 import type { SavedGameState } from '../storage/gameStorage';
+import { useSettingsStore } from '../storage/settingsStorage';
 import { cloneGrid } from '../utils/gridUtils';
 import { autoGenerateNotes } from '../utils/noteUtils';
 
@@ -123,6 +124,9 @@ interface GameActions {
 
   // Highlighting
   setHighlightDigit: (digit: number | null) => void;
+
+  // Daily Challenge
+  startDailyChallenge: () => void;
 }
 
 const createEmptyGrid = (): SudokuCell[][] =>
@@ -161,6 +165,37 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
   // Actions
   newGame: (difficulty: Difficulty) => {
     const { grid, solution } = SudokuGenerator.generate(difficulty);
+
+    // Map solution values to cells
+    const mappedGrid = grid.map((row, r) =>
+      row.map((cell, c) => ({
+        ...cell,
+        solutionValue: solution[r][c],
+      }))
+    );
+
+    set({
+      grid: mappedGrid,
+      difficulty,
+      selectedCell: null,
+      inputMode: 'solve',
+      mistakes: 0,
+      isGameOver: false,
+      isGameWon: false,
+      elapsedSeconds: 0,
+      isPaused: false,
+      pendingDigit: null,
+      undoStack: [],
+      redoStack: [],
+      moveHistory: [],
+    });
+  },
+
+  startDailyChallenge: () => {
+    const date = new Date();
+    // Use MEDIUM difficulty for daily challenge
+    const difficulty = Difficulty.MEDIUM;
+    const { grid, solution } = SudokuGenerator.generateDaily(date, difficulty);
 
     // Map solution values to cells
     const mappedGrid = grid.map((row, r) =>
@@ -234,7 +269,10 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
     const { pendingDigit } = get();
 
     // Auto-confirm any pending digit when selecting a different cell
-    if (pendingDigit && (pendingDigit.row !== row || pendingDigit.col !== col)) {
+    if (
+      pendingDigit &&
+      (pendingDigit.row !== row || pendingDigit.col !== col)
+    ) {
       get().confirmPendingDigit();
     }
 
@@ -293,8 +331,10 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
                 Math.floor(ci / 3) === Math.floor(col / 3))) &&
             !(ri === row && ci === col);
 
-          // Remove value from peer notes if it exists
-          if (isPeer && c.notes.includes(value)) {
+          const title = useSettingsStore.getState().autoRemoveNotes;
+
+          // Remove value from peer notes if it exists and setting is enabled
+          if (isPeer && c.notes.includes(value) && title) {
             return {
               ...c,
               notes: c.notes.filter((n) => n !== value),
@@ -452,7 +492,10 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
     const { pendingDigit, grid } = get();
 
     // If there's already a pending digit on a different cell, confirm it first
-    if (pendingDigit && (pendingDigit.row !== row || pendingDigit.col !== col)) {
+    if (
+      pendingDigit &&
+      (pendingDigit.row !== row || pendingDigit.col !== col)
+    ) {
       get().confirmPendingDigit();
     }
 
@@ -513,7 +556,11 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
                     Math.floor(ci / 3) === Math.floor(col / 3))) &&
                 !(ri === row && ci === col);
 
-              if (isPeer && c.notes.includes(value)) {
+              if (
+                isPeer &&
+                c.notes.includes(value) &&
+                useSettingsStore.getState().autoRemoveNotes
+              ) {
                 return {
                   ...c,
                   notes: c.notes.filter((n) => n !== value),
@@ -742,7 +789,11 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
             !(ri === row && ci === col);
 
           // Remove value from peer notes if it exists
-          if (isPeer && c.notes.includes(fastSolveDigit)) {
+          if (
+            isPeer &&
+            c.notes.includes(fastSolveDigit) &&
+            useSettingsStore.getState().autoRemoveNotes
+          ) {
             return {
               ...c,
               notes: c.notes.filter((n) => n !== fastSolveDigit),

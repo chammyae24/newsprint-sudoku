@@ -1,7 +1,15 @@
 import * as Haptics from 'expo-haptics';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSequence,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
 import type { SudokuCell as SudokuCellType } from '../../core/types';
+import { useSettingsStore } from '../../storage/settingsStorage';
 import { useGameStore } from '../../store/GameStore';
 
 interface CellProps {
@@ -25,6 +33,7 @@ export function Cell({ row, col, cell }: CellProps) {
   const isDrawingMode = useGameStore((state) => state.isDrawingMode);
   const highlightDigit = useGameStore((state) => state.highlightDigit);
   const pendingDigit = useGameStore((state) => state.pendingDigit);
+  const highlightPeers = useSettingsStore((state) => state.highlightPeers);
 
   const isSelected = selectedCell?.row === row && selectedCell?.col === col;
   const isSameRow = selectedCell?.row === row;
@@ -76,13 +85,44 @@ export function Cell({ row, col, cell }: CellProps) {
   const borderRight = col % 3 === 2 && col !== 8 ? 2.5 : 0.5;
   const borderBottom = row % 3 === 2 && row !== 8 ? 2.5 : 0.5;
 
+  // --- Animations ---
+  const scale = useSharedValue(cell.value ? 1 : 0.5);
+  const translateX = useSharedValue(0);
+
+  useEffect(() => {
+    if (cell.value !== null && !cell.isGiven) {
+      scale.value = 0.5;
+      scale.value = withSpring(1, { damping: 12, stiffness: 200 });
+    }
+  }, [cell.value, cell.isGiven]);
+
+  useEffect(() => {
+    if (isError) {
+      translateX.value = withSequence(
+        withTiming(-5, { duration: 50 }),
+        withTiming(5, { duration: 50 }),
+        withTiming(-5, { duration: 50 }),
+        withTiming(5, { duration: 50 }),
+        withTiming(0, { duration: 50 })
+      );
+    }
+  }, [isError]);
+
+  const animatedValueStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  const animatedContainerStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: translateX.value }],
+  }));
+
   // --- Background color based on state ---
   let bgColor = '#F5EDE0'; // parchment-100
   if (isSelected) {
     bgColor = '#E8D8B8';
   } else if (isSameValue) {
     bgColor = '#DDD0B0';
-  } else if (isPeer) {
+  } else if (isPeer && highlightPeers) {
     bgColor = '#EDE3D0';
   }
   if (isFastSolveTarget) {
@@ -170,8 +210,11 @@ export function Cell({ row, col, cell }: CellProps) {
     selectCellAction(row, col);
   };
 
+  const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+  const AnimatedText = Animated.createAnimatedComponent(Text);
+
   return (
-    <Pressable
+    <AnimatedPressable
       style={[
         cellStyles.cell,
         {
@@ -181,11 +224,12 @@ export function Cell({ row, col, cell }: CellProps) {
           borderRightColor: borderRight > 1 ? '#2A2118' : '#C4B08A',
           borderBottomColor: borderBottom > 1 ? '#2A2118' : '#C4B08A',
         },
+        animatedContainerStyle,
       ]}
       onPress={handlePress}
     >
       {cell.value !== null ? (
-        <Text
+        <AnimatedText
           style={[
             cellStyles.value,
             cell.isGiven && cellStyles.givenValue,
@@ -193,14 +237,15 @@ export function Cell({ row, col, cell }: CellProps) {
             isPendingDigit && cellStyles.pendingValue,
             isError && cellStyles.errorValue,
             hintPlacement === cell.value && cellStyles.hintValue,
+            !cell.isGiven && animatedValueStyle,
           ]}
         >
           {cell.value}
-        </Text>
+        </AnimatedText>
       ) : (
         renderNotes()
       )}
-    </Pressable>
+    </AnimatedPressable>
   );
 }
 

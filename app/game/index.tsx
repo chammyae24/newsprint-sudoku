@@ -1,9 +1,19 @@
 import { useRouter } from 'expo-router';
 import React, { useEffect, useRef } from 'react';
-import { AppState, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  AppState,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Difficulty } from '../../src/core/types';
 import { clearSavedGame, saveGameState } from '../../src/storage/gameStorage';
+import { useSettingsStore } from '../../src/storage/settingsStorage';
+import { recordGameResult } from '../../src/storage/statsStorage';
 import { useGameStore } from '../../src/store/GameStore';
 import { BoardDrawingOverlay } from '../../src/ui/components/BoardDrawingOverlay';
 import { Cell } from '../../src/ui/components/Cell';
@@ -14,6 +24,7 @@ import { Keypad } from '../../src/ui/components/Keypad';
 import { LevelSelector } from '../../src/ui/components/LevelSelector';
 import { LoseModal } from '../../src/ui/components/LoseModal';
 import { MoveHistoryReview } from '../../src/ui/components/MoveHistoryReview';
+import { PauseOverlay } from '../../src/ui/components/PauseOverlay';
 import { WinModal } from '../../src/ui/components/WinModal';
 import { haptics } from '../../src/utils/haptics';
 
@@ -39,6 +50,8 @@ export default function GameScreen() {
   const elapsedSeconds = useGameStore((state) => state.elapsedSeconds);
   const tick = useGameStore((state) => state.tick);
   const isPaused = useGameStore((state) => state.isPaused);
+  const pause = useGameStore((state) => state.pause);
+  const resume = useGameStore((state) => state.resume);
   const autoFillNotes = useGameStore((state) => state.autoFillNotes);
   const isDrawingMode = useGameStore((state) => state.isDrawingMode);
   const toggleDrawingMode = useGameStore((state) => state.toggleDrawingMode);
@@ -47,6 +60,11 @@ export default function GameScreen() {
     (state) => state.toggleFastSolveMode
   );
   const requestHint = useGameStore((state) => state.requestHint);
+  const undo = useGameStore((state) => state.undo);
+  const redo = useGameStore((state) => state.redo);
+  const canUndo = useGameStore((state) => state.undoStack.length > 0);
+  const canRedo = useGameStore((state) => state.redoStack.length > 0);
+  const showTimer = useSettingsStore((state) => state.showTimer);
 
   const [showLevelSelector, setShowLevelSelector] = React.useState(false);
   const [showStats, setShowStats] = React.useState(false);
@@ -90,6 +108,8 @@ export default function GameScreen() {
         nextAppState.match(/inactive|background/)
       ) {
         saveCurrentGame();
+        // Auto-pause when going to background
+        pause();
       }
       appState.current = nextAppState;
     });
@@ -113,10 +133,17 @@ export default function GameScreen() {
     return () => clearTimeout(timeout);
   }, [grid, mistakes, selectedCell]);
 
-  // Clear saved game on completion
+  // Clear saved game on completion and record stats
   useEffect(() => {
     if (isGameWon || isGameOver) {
       clearSavedGame();
+      recordGameResult({
+        difficulty,
+        won: isGameWon,
+        elapsedSeconds,
+        mistakes,
+        moveHistory: useGameStore.getState().moveHistory,
+      });
     }
   }, [isGameWon, isGameOver]);
 
@@ -169,126 +196,176 @@ export default function GameScreen() {
         showsVerticalScrollIndicator={false}
         bounces={false}
       >
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.difficultyText}>
-          DIFFICULTY: {DIFFICULTY_LABELS[difficulty] || difficulty}
-        </Text>
-        <View style={styles.headerCenter}>
-          <View style={styles.timerStrip}>
-            <Text style={styles.timerText}>⏱️ {formatTime(elapsedSeconds)}</Text>
-          </View>
-        </View>
-        <Text style={styles.livesText}>
-          {hearts.map((h, i) => (
-            <Text
-              key={i}
-              style={
-                i < remainingLives ? styles.heartFilled : styles.heartLost
-              }
-            >
-              {h}{' '}
+        {/* Header */}
+        <View style={styles.header}>
+          <View style={styles.difficultyBadge}>
+            <Text style={styles.difficultyLabel}>LEVEL</Text>
+            <Text style={styles.difficultyValue}>
+              {DIFFICULTY_LABELS[difficulty] || difficulty}
             </Text>
-          ))}
-        </Text>
-      </View>
+          </View>
+          <Pressable onPress={() => pause()} style={styles.headerCenter}>
+            {showTimer && (
+              <View style={styles.timerStrip}>
+                <Text style={styles.timerText}>
+                  ⏱️ {formatTime(elapsedSeconds)}
+                </Text>
+              </View>
+            )}
+            {!showTimer && (
+              <View
+                style={[
+                  styles.timerStrip,
+                  { opacity: 0.5, borderBottomWidth: 1 },
+                ]}
+              >
+                <Text style={[styles.timerText, { fontSize: 12 }]}>PAUSE</Text>
+              </View>
+            )}
+          </Pressable>
+          <Text style={styles.livesText}>
+            {hearts.map((h, i) => (
+              <Text
+                key={i}
+                style={
+                  i < remainingLives ? styles.heartFilled : styles.heartLost
+                }
+              >
+                {h}{' '}
+              </Text>
+            ))}
+          </Text>
+        </View>
 
-      {/* Input Mode Switcher */}
-      <InputModeSwitcher />
+        {/* Input Mode Switcher */}
+        <InputModeSwitcher />
 
-      {/* Grid */}
-      <View style={styles.gridWrapper}>
-        <View style={styles.gridBorder}>
-          {grid.map((row, rowIndex) => (
-            <View key={rowIndex} style={styles.gridRow}>
-              {row.map((cell, colIndex) => (
-                <Cell
-                  key={`${rowIndex}-${colIndex}`}
-                  row={rowIndex}
-                  col={colIndex}
-                  cell={cell}
-                />
-              ))}
-            </View>
-          ))}
-          {/* Drawing overlay - positioned on top of grid */}
-          {isDrawingMode && (
-            <BoardDrawingOverlay
-              gridSize={38 * 9} // 38 is cell size
-            />
+        {/* Grid */}
+        <View style={styles.gridWrapper}>
+          <Animated.View
+            entering={FadeInDown.delay(300).springify().damping(12)}
+            style={styles.gridBorder}
+          >
+            {grid.map((row, rowIndex) => (
+              <View key={rowIndex} style={styles.gridRow}>
+                {row.map((cell, colIndex) => (
+                  <Cell
+                    key={`${rowIndex}-${colIndex}`}
+                    row={rowIndex}
+                    col={colIndex}
+                    cell={cell}
+                  />
+                ))}
+              </View>
+            ))}
+            {/* Drawing overlay - positioned on top of grid */}
+            {isDrawingMode && (
+              <BoardDrawingOverlay
+                gridSize={38 * 9} // 38 is cell size
+              />
+            )}
+          </Animated.View>
+        </View>
+
+        {/* Selected cell info */}
+        <View style={styles.selectionInfo}>
+          {selectedCell ? (
+            <Text style={styles.selectionText}>
+              Selected: Row {selectedCell.row + 1}, Col {selectedCell.col + 1}
+            </Text>
+          ) : (
+            <Text style={styles.selectionText}>Tap a cell to select</Text>
           )}
         </View>
-      </View>
 
-      {/* Selected cell info */}
-      <View style={styles.selectionInfo}>
-        {selectedCell ? (
-          <Text style={styles.selectionText}>
-            Selected: Row {selectedCell.row + 1}, Col {selectedCell.col + 1}
-          </Text>
-        ) : (
-          <Text style={styles.selectionText}>Tap a cell to select</Text>
-        )}
-      </View>
+        {/* Keypad */}
+        <Keypad />
 
-
-
-      {/* Keypad */}
-      <Keypad />
-
-      {/* Actions */}
-      <View style={styles.actionsRow}>
-        <Eraser />
-
-        <Pressable
-          style={[
-            styles.actionButton,
-            isFastSolveMode && styles.actionButtonActive,
-          ]}
-          onPress={() => toggleFastSolveMode()}
-        >
-          <Text
+        {/* Actions */}
+        <View style={styles.actionsRow}>
+          <Pressable
             style={[
-              styles.actionText,
-              isFastSolveMode && styles.actionTextActive,
+              styles.actionButton,
+              !canUndo && styles.actionButtonDisabled,
             ]}
+            onPress={undo}
+            disabled={!canUndo}
           >
-            ⚡ {isFastSolveMode ? 'Fast ON' : 'Fast Solve'}
-          </Text>
-        </Pressable>
+            <Text
+              style={[styles.actionText, !canUndo && styles.actionTextDisabled]}
+            >
+              ↩️ Undo
+            </Text>
+          </Pressable>
 
-        <Pressable
-          style={[
-            styles.actionButton,
-            isDrawingMode && styles.actionButtonActive,
-          ]}
-          onPress={() => toggleDrawingMode()}
-        >
-          <Text
+          <Pressable
             style={[
-              styles.actionText,
-              isDrawingMode && styles.actionTextActive,
+              styles.actionButton,
+              !canRedo && styles.actionButtonDisabled,
             ]}
+            onPress={redo}
+            disabled={!canRedo}
           >
-            ✏️ {isDrawingMode ? 'Draw ON' : 'Draw'}
-          </Text>
-        </Pressable>
+            <Text
+              style={[styles.actionText, !canRedo && styles.actionTextDisabled]}
+            >
+              ↪️ Redo
+            </Text>
+          </Pressable>
+          <Eraser />
 
-        <Pressable style={styles.actionButton} onPress={() => autoFillNotes()}>
-          <Text style={styles.actionText}>📝 Notes</Text>
-        </Pressable>
+          <Pressable
+            style={[
+              styles.actionButton,
+              isFastSolveMode && styles.actionButtonActive,
+            ]}
+            onPress={() => toggleFastSolveMode()}
+          >
+            <Text
+              style={[
+                styles.actionText,
+                isFastSolveMode && styles.actionTextActive,
+              ]}
+            >
+              ⚡ {isFastSolveMode ? 'Fast ON' : 'Fast Solve'}
+            </Text>
+          </Pressable>
 
-        <Pressable
-          style={styles.actionButton}
-          onPress={() => setShowLevelSelector(true)}
-        >
-          <Text style={styles.actionText}>🔄 New</Text>
-        </Pressable>
+          <Pressable
+            style={[
+              styles.actionButton,
+              isDrawingMode && styles.actionButtonActive,
+            ]}
+            onPress={() => toggleDrawingMode()}
+          >
+            <Text
+              style={[
+                styles.actionText,
+                isDrawingMode && styles.actionTextActive,
+              ]}
+            >
+              ✏️ {isDrawingMode ? 'Draw ON' : 'Draw'}
+            </Text>
+          </Pressable>
 
-        <Pressable style={styles.actionButton} onPress={() => requestHint()}>
-          <Text style={styles.actionText}>🔍 Hint</Text>
-        </Pressable>
-      </View>
+          <Pressable
+            style={styles.actionButton}
+            onPress={() => autoFillNotes()}
+          >
+            <Text style={styles.actionText}>📝 Notes</Text>
+          </Pressable>
+
+          <Pressable
+            style={styles.actionButton}
+            onPress={() => setShowLevelSelector(true)}
+          >
+            <Text style={styles.actionText}>🔄 New</Text>
+          </Pressable>
+
+          <Pressable style={styles.actionButton} onPress={() => requestHint()}>
+            <Text style={styles.actionText}>🔍 Hint</Text>
+          </Pressable>
+        </View>
       </ScrollView>
 
       {/* Hint Overlay */}
@@ -323,6 +400,16 @@ export default function GameScreen() {
         visible={showStats}
         onClose={() => setShowStats(false)}
       />
+
+      {/* Pause Overlay */}
+      <PauseOverlay
+        visible={isPaused && !isGameOver && !isGameWon}
+        onResume={resume}
+        onQuit={() => {
+          resume(); // Unpause state cleanup
+          handleGoHome();
+        }}
+      />
     </SafeAreaView>
   );
 }
@@ -346,11 +433,25 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     paddingTop: 8,
   },
-  difficultyText: {
+  difficultyBadge: {
+    backgroundColor: '#2A2118',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  difficultyLabel: {
     fontFamily: 'SpecialElite_400Regular',
-    fontSize: 12,
-    color: '#2A2118',
-    letterSpacing: 1,
+    fontSize: 8,
+    color: '#D4C5A8',
+    marginBottom: -2,
+  },
+  difficultyValue: {
+    fontFamily: 'PlayfairDisplay_700Bold',
+    fontSize: 14,
+    color: '#F5EDE0',
+    letterSpacing: 0.5,
   },
   headerCenter: {
     alignItems: 'center',
@@ -452,5 +553,14 @@ const styles = StyleSheet.create({
   },
   actionTextActive: {
     color: '#FDF8F0',
+  },
+  actionButtonDisabled: {
+    opacity: 0.4,
+    borderBottomWidth: 2,
+    borderColor: '#C4B08A',
+    backgroundColor: '#F5EDE0',
+  },
+  actionTextDisabled: {
+    color: '#B0A898',
   },
 });
