@@ -1,6 +1,6 @@
 import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { Difficulty } from '../src/core/types';
 import {
@@ -139,12 +139,8 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-        bounces={false}
-      >
-        {/* Ransom-Note Title */}
+      {/* Layer 1: Title (Always Centered) */}
+      <View style={styles.centeredLayer} pointerEvents="none">
         <View style={styles.titleContainer}>
           <View style={styles.titleRow}>
             {TITLE_LINE1.map((l, i) => (
@@ -157,43 +153,23 @@ export default function HomeScreen() {
             ))}
           </View>
         </View>
+      </View>
 
-        {/* Menu Buttons */}
+      {/* Layer 2: Menu Buttons (Offset below title) */}
+      <View style={styles.menuLayer} pointerEvents="box-none">
         <View style={styles.menuContainer}>
-          {/* Daily Challenge Button */}
+          {/* Daily Challenge Button - Compact */}
           <Pressable
             onPress={handleDailyChallenge}
             style={({ pressed }) => [
               styles.tornPaperButton,
-              styles.dailyChallengeButton,
               pressed && styles.tornPaperButtonPressed,
             ]}
           >
-            <View style={styles.postalStamp}>
-              <Text style={styles.postalStampText}>DAILY</Text>
-            </View>
-            <View>
-              <Text style={styles.buttonTitle}>TODAY'S PUZZLE</Text>
-              <Text style={styles.buttonSubtitle}>
-                {dailyCompleted
-                  ? '✅ Completed'
-                  : new Date().toLocaleDateString('en-US', {
-                      weekday: 'long',
-                      month: 'short',
-                      day: 'numeric',
-                    })}
-              </Text>
-              {dailyStreak > 0 && (
-                <Text
-                  style={[
-                    styles.buttonSubtitle,
-                    { color: '#A02020', fontWeight: 'bold' },
-                  ]}
-                >
-                  🔥 {dailyStreak} Day Streak
-                </Text>
-              )}
-            </View>
+            <Text style={styles.buttonTitle}>TODAY'S PUZZLE</Text>
+            {dailyCompleted && (
+              <Text style={styles.completedBadge}>✅ Completed</Text>
+            )}
           </Pressable>
 
           {/* New Puzzle / Resume Button */}
@@ -218,38 +194,35 @@ export default function HomeScreen() {
                 pressed && styles.tornPaperButtonPressed,
               ]}
             >
-              {/* Postal stamp decoration */}
-              <View style={styles.postalStamp}>
-                <Text style={styles.postalStampText}>NEW</Text>
-              </View>
               <Text style={styles.buttonTitle}>NEW GAME</Text>
             </Pressable>
           )}
-
-          {/* Stats Button */}
-          <Pressable
-            onPress={() => router.push('/stats' as any)}
-            style={({ pressed }) => [
-              styles.tornPaperButton,
-              pressed && styles.tornPaperButtonPressed,
-            ]}
-          >
-            <Text style={styles.buttonTitle}>STATS</Text>
-          </Pressable>
-
-          {/* Settings Button */}
-          <Pressable
-            onPress={() => router.push('/settings' as any)}
-            style={({ pressed }) => [
-              styles.tornPaperButton,
-              styles.settingsButton,
-              pressed && styles.tornPaperButtonPressed,
-            ]}
-          >
-            <Text style={styles.buttonTitle}>SETTINGS</Text>
-          </Pressable>
         </View>
-      </ScrollView>
+      </View>
+
+      {/* Stats Button - Top Right (Inner) */}
+      <Pressable
+        onPress={() => router.push('/stats' as any)}
+        style={({ pressed }) => [
+          styles.cornerButton,
+          styles.statsButtonPosition,
+          pressed && styles.cornerButtonPressed,
+        ]}
+      >
+        <Text style={styles.emojiText}>📊</Text>
+      </Pressable>
+
+      {/* Settings Button - Top Right (Outer) */}
+      <Pressable
+        onPress={() => router.push('/settings' as any)}
+        style={({ pressed }) => [
+          styles.cornerButton,
+          styles.settingsButtonPosition,
+          pressed && styles.cornerButtonPressed,
+        ]}
+      >
+        <Text style={styles.emojiText}>⚙️</Text>
+      </Pressable>
 
       {/* Level Selector Drawer */}
       <LevelSelector
@@ -266,48 +239,26 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F5EDE0',
   },
-  scrollContent: {
-    flexGrow: 1,
+
+  // --- Layers ---
+  centeredLayer: {
+    ...StyleSheet.absoluteFillObject,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingVertical: 40,
+    zIndex: 1,
+    paddingBottom: 80, // Visual adjustment to center title slightly higher visually if needed
   },
-
-  // --- Stamp ---
-  stampContainer: {
-    position: 'absolute',
-    top: 50,
-    right: 20,
-    transform: [{ rotate: '3deg' }],
-    zIndex: 10,
-  },
-  stampBorder: {
-    borderWidth: 3,
-    borderColor: '#A02020',
-    borderRadius: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    opacity: 0.85,
-  },
-  stampText: {
-    fontFamily: 'SpecialElite_400Regular',
-    fontSize: 16,
-    color: '#A02020',
-    fontWeight: '700',
-    textAlign: 'center',
-  },
-  stampSubText: {
-    fontFamily: 'SpecialElite_400Regular',
-    fontSize: 11,
-    color: '#A02020',
-    textAlign: 'center',
+  menuLayer: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 2,
+    paddingTop: 220, // Push buttons down below the title
   },
 
   // --- Title ---
   titleContainer: {
     alignItems: 'center',
-    marginBottom: 36,
   },
   titleRow: {
     flexDirection: 'row',
@@ -326,100 +277,85 @@ const styles = StyleSheet.create({
 
   // --- Menu Buttons ---
   menuContainer: {
-    gap: 18,
+    gap: 12,
     alignItems: 'center',
-    paddingHorizontal: 12,
+    width: '100%',
+    paddingHorizontal: 20,
+    marginTop: 100,
   },
   tornPaperButton: {
-    width: '80%',
+    width: 'auto',
+    minWidth: 200,
+    maxWidth: '80%',
     backgroundColor: '#FDF8F0',
-    paddingVertical: 14,
-    paddingHorizontal: 24,
-    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
     alignItems: 'center',
+    justifyContent: 'center',
     shadowColor: '#2A2118',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-    borderWidth: 2.5,
+    shadowRadius: 6,
+    elevation: 6,
+    borderWidth: 2,
     borderColor: '#2A2118',
-    borderBottomWidth: 5,
+    borderBottomWidth: 4,
     borderBottomColor: '#1A1410',
   },
   tornPaperButtonPressed: {
     backgroundColor: '#EDE3D0',
-    transform: [{ scale: 0.97 }],
+    transform: [{ scale: 0.98 }, { translateY: 2 }],
     borderBottomWidth: 2,
-    marginTop: 3,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.15,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
   },
   buttonTitle: {
     fontFamily: 'PlayfairDisplay_700Bold',
-    fontSize: 22,
+    fontSize: 16,
     color: '#2A2118',
-    letterSpacing: 2,
+    letterSpacing: 1,
     textAlign: 'center',
   },
-  buttonSubtitle: {
+  completedBadge: {
     fontFamily: 'Lora_400Regular_Italic',
-    fontSize: 13,
-    color: '#8B7355',
-    marginTop: 6,
-    textAlign: 'center',
+    fontSize: 11,
+    color: '#3A8F3A',
+    marginTop: 2,
   },
 
-  // Daily Challenge variant
-  dailyChallengeButton: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-  },
-  postalStamp: {
+  // --- Corner Buttons ---
+  cornerButton: {
     position: 'absolute',
-    left: 16,
-    top: '50%',
-    marginTop: -16,
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    borderWidth: 2,
-    borderColor: '#A02020',
-    borderStyle: 'dashed',
+    top: 60,
+    width: 44,
+    height: 44,
+    backgroundColor: '#E0D5BF',
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
-    transform: [{ rotate: '-12deg' }],
-    opacity: 0.7,
+    borderWidth: 2,
+    borderColor: '#2A2118',
+    borderBottomWidth: 4,
+    borderBottomColor: '#1A1410',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
+    zIndex: 10,
   },
-  postalStampText: {
-    fontFamily: 'SpecialElite_400Regular',
-    fontSize: 8,
-    color: '#A02020',
-    fontWeight: '700',
+  cornerButtonPressed: {
+    transform: [{ scale: 0.95 }, { translateY: 2 }],
+    borderBottomWidth: 2,
   },
-
-  // Settings variant
-  settingsButton: {
-    backgroundColor: '#E0D5BF',
+  statsButtonPosition: {
+    right: 80,
   },
-
-  // --- Coffee Stain ---
-  coffeeStainOuter: {
-    position: 'absolute',
-    bottom: 30,
-    left: 10,
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    borderWidth: 8,
-    borderColor: 'rgba(184, 144, 96, 0.25)',
-    opacity: 0.6,
+  settingsButtonPosition: {
+    right: 24,
   },
-  coffeeStainInner: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 50,
-    borderWidth: 3,
-    borderColor: 'rgba(184, 144, 96, 0.15)',
+  emojiText: {
+    fontSize: 22,
   },
 });

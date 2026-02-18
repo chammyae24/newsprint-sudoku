@@ -129,7 +129,7 @@ export default function StatsScreen() {
                       style={[
                         styles.techniqueBar,
                         {
-                          width: `${(count / max) * 100}%`,
+                          width: `${(count / max) * 95}%`,
                         },
                       ]}
                     />
