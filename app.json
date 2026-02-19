@@ -27,7 +27,17 @@
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/favicon.png",
+      "name": "Newsprint Sudoku",
+      "shortName": "Sudoku",
+      "startUrl": "/",
+      "display": "standalone",
+      "backgroundColor": "#E6F4FE",
+      "themeColor": "#E6F4FE",
+      "description": "A classic Sudoku game with a newsprint aesthetic.",
+      "orientation": "portrait",
+      "dir": "ltr",
+      "lang": "en"
     },
     "plugins": [
       "expo-router",

@@ -1,0 +1,19 @@
+{
+  "name": "Newsprint Sudoku",
+  "short_name": "Sudoku",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#E6F4FE",
+  "theme_color": "#E6F4FE",
+  "description": "A classic Sudoku game with a newsprint aesthetic.",
+  "orientation": "portrait",
+  "dir": "ltr",
+  "lang": "en",
+  "icons": [
+    {
+      "src": "/icon.png",
+      "sizes": "1024x1024",
+      "type": "image/png"
+    }
+  ]
+}
