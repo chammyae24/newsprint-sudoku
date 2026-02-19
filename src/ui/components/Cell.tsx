@@ -272,10 +272,10 @@ const cellStyles = StyleSheet.create({
     fontFamily: 'GloriaHallelujah_400Regular',
     fontSize: 20,
     lineHeight: 30,
-    color: '#4A3828',
+    color: '#1d1df6ff',
   },
   pendingValue: {
-    color: '#8B7355',
+    color: '#1d1df6ff',
     opacity: 0.45,
   },
   errorValue: {

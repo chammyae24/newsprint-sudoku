@@ -62,6 +62,10 @@ interface GameState {
   // Handwriting status
   isWriting: boolean;
 
+  // Game Completion Delay (Drawing Mode)
+  gameCompletionPending: boolean;
+  completionTimerSeconds: number;
+
   // Undo/Redo stacks
   undoStack: UndoableState[];
   redoStack: UndoableState[];
@@ -106,6 +110,10 @@ interface GameActions {
   setPendingDigit: (row: number, col: number, value: number) => void;
   confirmPendingDigit: () => void;
   cancelPendingDigit: () => void;
+
+  // Game Completion Delay
+  cancelGameCompletion: () => void;
+  tickCompletionTimer: () => void;
 
   // Undo/Redo
   undo: () => void;
@@ -164,6 +172,8 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
   isFastSolveMode: false,
   fastSolveDigit: null,
   isWriting: false,
+  gameCompletionPending: false,
+  completionTimerSeconds: 0,
   undoStack: [],
   redoStack: [],
   moveHistory: [],
@@ -398,6 +408,10 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
     // Can't add notes to given cells or cells with values
     if (cell.isGiven || cell.value !== null) return;
 
+    if (get().gameCompletionPending) {
+      get().cancelGameCompletion();
+    }
+
     set((state) => {
       // Check for note removal (elimination)
       const currentCell = state.grid[row][col];
@@ -454,6 +468,10 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
 
     if (!selectedCell || isGameOver) return;
 
+    if (get().gameCompletionPending) {
+      get().cancelGameCompletion();
+    }
+
     const { row, col } = selectedCell;
     const cell = grid[row][col];
 
@@ -497,9 +515,29 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
     set({ isPencilDetected: detected });
   },
 
+  // Game Completion Delay
+  cancelGameCompletion: () => {
+    set({
+      gameCompletionPending: false,
+      completionTimerSeconds: 0,
+    });
+  },
+
+  tickCompletionTimer: () => {
+    const { completionTimerSeconds, gameCompletionPending } = get();
+    if (!gameCompletionPending) return;
+
+    if (completionTimerSeconds > 0) {
+      set({ completionTimerSeconds: completionTimerSeconds - 1 });
+    } else {
+      // Timer finished - confirm!
+      get().confirmPendingDigit();
+    }
+  },
+
   // Pending digit actions (for handwriting confirmation)
   setPendingDigit: (row: number, col: number, value: number) => {
-    const { pendingDigit, grid } = get();
+    const { pendingDigit, grid, gameCompletionPending } = get();
 
     // If there's already a pending digit on a different cell, confirm it first
     if (
@@ -507,6 +545,12 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
       (pendingDigit.row !== row || pendingDigit.col !== col)
     ) {
       get().confirmPendingDigit();
+    }
+
+    // If we are currently in the delay period and the user draws again (correction),
+    // cancel the completion pending state and restart logic
+    if (gameCompletionPending) {
+      get().cancelGameCompletion();
     }
 
     // Place the digit visually in the grid without validating
@@ -531,13 +575,18 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
       };
     });
 
-    // If the board is now fully filled (last cell), auto-confirm immediately
+    // If the board is now fully filled (last cell), start the delay timer
     const updatedGrid = get().grid;
     const allFilled = updatedGrid.every((r) =>
       r.every((c) => c.value !== null)
     );
+
     if (allFilled) {
-      get().confirmPendingDigit();
+      // Start 5 second timer
+      set({
+        gameCompletionPending: true,
+        completionTimerSeconds: 5,
+      });
     }
   },
 
@@ -592,6 +641,8 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
       return {
         grid: newGrid,
         pendingDigit: null,
+        gameCompletionPending: false,
+        completionTimerSeconds: 0,
         mistakes: newMistakes,
         isGameOver: newIsGameOver,
         isGameWon: isWon,
@@ -632,6 +683,8 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
       return {
         grid: newGrid,
         pendingDigit: null,
+        gameCompletionPending: false,
+        completionTimerSeconds: 0,
       };
     });
   },
@@ -686,6 +739,10 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
   },
 
   undo: () => {
+    if (get().gameCompletionPending) {
+      get().cancelGameCompletion();
+    }
+
     set((state) => {
       if (state.undoStack.length === 0) return state;
 
@@ -709,6 +766,10 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
   },
 
   redo: () => {
+    if (get().gameCompletionPending) {
+      get().cancelGameCompletion();
+    }
+
     set((state) => {
       if (state.redoStack.length === 0) return state;
 

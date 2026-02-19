@@ -34,7 +34,7 @@ interface DrawingCanvasProps {
  */
 export function DrawingCanvas({
   size,
-  strokeColor = '#1a1a2e',
+  strokeColor = '#1d1df6ff',
   strokeWidth = 3,
   onDrawingComplete,
   onStylusDetected,
@@ -74,7 +74,7 @@ export function DrawingCanvas({
  */
 function SvgDrawingCanvas({
   size,
-  strokeColor = '#1a1a2e',
+  strokeColor = '#1d1df6ff',
   strokeWidth = 3,
   onDrawingComplete,
   onStylusDetected,
@@ -231,7 +231,7 @@ function SvgDrawingCanvas({
  */
 function SkiaDrawingCanvas({
   size,
-  strokeColor = '#1a1a2e',
+  strokeColor = '#1d1df6ff',
   strokeWidth = 3,
   onDrawingComplete,
   onStylusDetected,

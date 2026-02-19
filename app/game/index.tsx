@@ -18,6 +18,7 @@ import { recordGameResult } from '../../src/storage/statsStorage';
 import { useGameStore } from '../../src/store/GameStore';
 import { BoardDrawingOverlay } from '../../src/ui/components/BoardDrawingOverlay';
 import { Cell } from '../../src/ui/components/Cell';
+import { CompletionTimer } from '../../src/ui/components/CompletionTimer';
 import { Eraser } from '../../src/ui/components/Eraser';
 import { HintOverlay } from '../../src/ui/components/HintOverlay';
 import { InputModeSwitcher } from '../../src/ui/components/InputModeSwitcher';
@@ -200,6 +201,7 @@ export default function GameScreen() {
         // On Web, touch-action: none handles this better without DOM thrashing
         scrollEnabled={Platform.OS === 'web' ? true : !isWriting}
       >
+        <CompletionTimer />
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.difficultyBadge}>
@@ -384,7 +386,7 @@ export default function GameScreen() {
 
       {/* Win Modal */}
       <WinModal
-        visible={isGameWon && !showStats}
+        visible={isGameWon && !showStats && !showLevelSelector}
         elapsedSeconds={elapsedSeconds}
         onNewGame={handleNewGame}
         onGoHome={handleGoHome}

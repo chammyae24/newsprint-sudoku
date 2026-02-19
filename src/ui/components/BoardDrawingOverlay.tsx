@@ -28,7 +28,7 @@ interface BoardDrawingOverlayProps {
  */
 export function BoardDrawingOverlay({
   gridSize,
-  strokeColor = '#1a1a2e',
+  strokeColor = '#1d1df6ff',
   strokeWidth = 4,
 }: BoardDrawingOverlayProps) {
   const grid = useGameStore((state) => state.grid);
