@@ -59,6 +59,9 @@ interface GameState {
   isFastSolveMode: boolean;
   fastSolveDigit: number | null;
 
+  // Handwriting status
+  isWriting: boolean;
+
   // Undo/Redo stacks
   undoStack: UndoableState[];
   redoStack: UndoableState[];
@@ -116,6 +119,8 @@ interface GameActions {
   setFastSolveDigit: (digit: number | null) => void;
   placeFastSolveDigit: (row: number, col: number) => boolean;
 
+  setIsWriting: (isWriting: boolean) => void;
+
   // Utility
   isValueInSelectedPeers: (value: number) => boolean;
   requestHint: () => void;
@@ -158,6 +163,7 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
   pendingDigit: null,
   isFastSolveMode: false,
   fastSolveDigit: null,
+  isWriting: false,
   undoStack: [],
   redoStack: [],
   moveHistory: [],
@@ -189,6 +195,10 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
       redoStack: [],
       moveHistory: [],
     });
+  },
+
+  setIsWriting: (isWriting: boolean) => {
+    set({ isWriting });
   },
 
   startDailyChallenge: () => {

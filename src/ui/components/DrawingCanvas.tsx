@@ -92,7 +92,7 @@ function SvgDrawingCanvas({
 
   // Keep refs in sync with state
   pathsRef.current = paths;
-  currentPathRef.current = currentPath;
+  // currentPathRef.current = currentPath; // REMOVED: Manually managed in PanResponder
 
   const getPoint = (event: GestureResponderEvent) => {
     return {
@@ -107,6 +107,8 @@ function SvgDrawingCanvas({
       onMoveShouldSetPanResponder: () => !disabled,
       onPanResponderGrant: (event) => {
         const point = getPoint(event);
+        // FIX: Update ref immediately
+        currentPathRef.current = [point];
         setCurrentPath([point]);
 
         // Check for stylus (Apple Pencil)
@@ -119,8 +121,12 @@ function SvgDrawingCanvas({
       },
       onPanResponderMove: (event) => {
         const point = getPoint(event);
+        // FIX: Update ref immediately
+        currentPathRef.current.push(point);
         setCurrentPath((prev) => [...prev, point]);
       },
+      // Prevent parent ScrollView from stealing the touch
+      onPanResponderTerminationRequest: () => false,
       onPanResponderRelease: () => {
         // Use refs to get current values (avoid stale closure)
         const currentPoints = currentPathRef.current;
@@ -134,6 +140,9 @@ function SvgDrawingCanvas({
           };
           const newPaths = [...existingPaths, newPath];
           setPaths(newPaths);
+          // Immediately update ref to avoid stale state if next stroke starts quickly
+          pathsRef.current = newPaths;
+
           setCurrentPath([]);
 
           if (onDrawingComplete) {
@@ -178,7 +187,11 @@ function SvgDrawingCanvas({
   return (
     <View
       ref={containerRef}
-      style={[canvasStyles.container, { width: size, height: size }]}
+      // @ts-ignore - touchAction is a valid web style prop
+      style={[
+        canvasStyles.container,
+        { width: size, height: size, touchAction: 'none' },
+      ]}
       {...panResponder.panHandlers}
     >
       <Svg width={size} height={size} style={StyleSheet.absoluteFill}>

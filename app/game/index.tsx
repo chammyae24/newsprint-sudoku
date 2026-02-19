@@ -2,6 +2,7 @@ import { useRouter } from 'expo-router';
 import React, { useEffect, useRef } from 'react';
 import {
   AppState,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -65,6 +66,7 @@ export default function GameScreen() {
   const canUndo = useGameStore((state) => state.undoStack.length > 0);
   const canRedo = useGameStore((state) => state.redoStack.length > 0);
   const showTimer = useSettingsStore((state) => state.showTimer);
+  const isWriting = useGameStore((state) => state.isWriting);
 
   const [showLevelSelector, setShowLevelSelector] = React.useState(false);
   const [showStats, setShowStats] = React.useState(false);
@@ -195,6 +197,8 @@ export default function GameScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
         bounces={false}
+        // On Web, touch-action: none handles this better without DOM thrashing
+        scrollEnabled={Platform.OS === 'web' ? true : !isWriting}
       >
         {/* Header */}
         <View style={styles.header}>

@@ -1,11 +1,11 @@
 import * as Haptics from 'expo-haptics';
 import React, { useRef, useState } from 'react';
 import {
-    GestureResponderEvent,
-    PanResponder,
-    StyleSheet,
-    Text,
-    View,
+  GestureResponderEvent,
+  PanResponder,
+  StyleSheet,
+  Text,
+  View,
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { recognizeDigitJS } from '../../recognition';
@@ -36,6 +36,7 @@ export function BoardDrawingOverlay({
   const setPendingDigit = useGameStore((state) => state.setPendingDigit);
   const toggleNote = useGameStore((state) => state.toggleNote);
   const selectCell = useGameStore((state) => state.selectCell);
+  const setIsWriting = useGameStore((state) => state.setIsWriting);
 
   const [paths, setPaths] = useState<DrawingPath[]>([]);
   const [currentPath, setCurrentPath] = useState<{ x: number; y: number }[]>(
@@ -55,7 +56,7 @@ export function BoardDrawingOverlay({
   const currentPathRef = useRef<{ x: number; y: number }[]>([]);
 
   pathsRef.current = paths;
-  currentPathRef.current = currentPath;
+  // currentPathRef.current = currentPath; // REMOVED: Manually managed in PanResponder to avoid staleness
 
   const cellSize = gridSize / 9;
 
@@ -118,6 +119,9 @@ export function BoardDrawingOverlay({
       })),
     }));
   };
+
+  // Track the active pointer type to prioritize pen
+  const activePointerId = useRef<number | null>(null);
 
   const getPoint = (event: GestureResponderEvent) => ({
     x: event.nativeEvent.locationX,
@@ -222,17 +226,23 @@ export function BoardDrawingOverlay({
     setCurrentPath([]);
   };
 
+  const recognitionTimeoutRef = useRef<any>(null);
+
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: (event) => {
+        // @ts-ignore - pointerType property availability check
+        const pointerType = event.nativeEvent.pointerType || 'touch';
+        // @ts-ignore - pointerId property availability check
+        const pointerId = event.nativeEvent.pointerId;
+
         const { locationX, locationY } = event.nativeEvent;
-        // Check if we are touching a filled cell
         const col = Math.floor(locationX / cellSize);
         const row = Math.floor(locationY / cellSize);
 
+        // Check bounds and filled cells
         if (row >= 0 && row < 9 && col >= 0 && col < 9) {
           const cell = grid[row][col];
-          // If cell has a value, let touch pass through to Cell component below
           if (cell.value !== null) {
             return false;
           }
@@ -253,35 +263,92 @@ export function BoardDrawingOverlay({
         return true;
       },
       onPanResponderGrant: (event) => {
+        // @ts-ignore - pointerType
+        const pointerType = event.nativeEvent.pointerType || 'touch';
+        // @ts-ignore - pointerId
+        const pointerId = event.nativeEvent.pointerId;
+
+        // If we found a PEN, and the currently active pointer was NOT a pen (e.g. palm),
+        // we should restart.
+        if (pointerType === 'pen' && activePointerId.current !== pointerId) {
+          // Reset if taking over?
+          // Actually, Grant usually implies a new gesture start.
+          activePointerId.current = pointerId;
+        } else if (activePointerId.current === null) {
+          activePointerId.current = pointerId;
+        }
+
+        // Clear any pending recognition
+        if (recognitionTimeoutRef.current) {
+          clearTimeout(recognitionTimeoutRef.current);
+          recognitionTimeoutRef.current = null;
+        }
+
+        setIsWriting(true);
         const point = getPoint(event);
+        currentPathRef.current = [point];
         setCurrentPath([point]);
       },
       onPanResponderMove: (event) => {
+        // @ts-ignore
+        const pointerType = event.nativeEvent.pointerType || 'touch';
+        // @ts-ignore
+        const pointerId = event.nativeEvent.pointerId;
+
+        // Palm Rejection: If current active pointer is PEN, ignore TOUCH moves
+        // Note: PanResponder might merge them, but checking ID helps.
+        if (
+          activePointerId.current !== null &&
+          pointerType !== 'pen' && // If this move is NOT pen
+          activePointerId.current !== pointerId // And it's not the active pointer
+        ) {
+          // It's a palm moving while pen is down?
+          return;
+        }
+
+        // If it returns to being a pen, make sure we track it?
+        if (pointerType === 'pen') {
+          activePointerId.current = pointerId;
+        }
+
         const point = getPoint(event);
+        currentPathRef.current.push(point);
         setCurrentPath((prev) => [...prev, point]);
       },
-      onPanResponderRelease: () => {
-        const currentPoints = currentPathRef.current;
-        const existingPaths = pathsRef.current;
-
-        if (currentPoints.length > 0) {
-          const newPath: DrawingPath = {
-            points: [...currentPoints],
-            color: strokeColor,
-            strokeWidth,
-          };
-          const newPaths = [...existingPaths, newPath];
-          setPaths(newPaths);
-          setCurrentPath([]);
-
-          // Process after a short delay to allow multi-stroke digits
-          setTimeout(() => {
-            handleDrawingComplete(newPaths);
-          }, 500);
-        }
-      },
+      onPanResponderTerminationRequest: () => false,
+      onPanResponderRelease: () => handlePanResponderRelease(),
+      onPanResponderTerminate: () => handlePanResponderRelease(),
     })
   ).current;
+
+  const handlePanResponderRelease = () => {
+    const currentPoints = currentPathRef.current;
+    const existingPaths = pathsRef.current;
+
+    // Reset active pointer
+    activePointerId.current = null;
+
+    if (currentPoints.length > 0) {
+      const newPath: DrawingPath = {
+        points: [...currentPoints],
+        color: strokeColor,
+        strokeWidth,
+      };
+      const newPaths = [...existingPaths, newPath];
+      setPaths(newPaths);
+      pathsRef.current = newPaths;
+
+      setCurrentPath([]);
+      // setIsWriting(false);
+
+      recognitionTimeoutRef.current = setTimeout(() => {
+        setIsWriting(false);
+        handleDrawingComplete(newPaths);
+      }, 800);
+    } else {
+      setIsWriting(false);
+    }
+  };
 
   const pointsToSvgPath = (points: { x: number; y: number }[]): string => {
     if (points.length === 0) return '';
@@ -313,10 +380,20 @@ export function BoardDrawingOverlay({
   return (
     <>
       <View
-        style={[styles.overlay, { width: gridSize, height: gridSize }]}
+        // @ts-ignore - touchAction is a valid web style prop
+        style={[
+          styles.overlay,
+          { width: gridSize, height: gridSize, touchAction: 'none' },
+        ]}
+        // Use Pointer Events for handling input
         {...panResponder.panHandlers}
       >
-        <Svg width={gridSize} height={gridSize} style={StyleSheet.absoluteFill}>
+        <Svg
+          width={gridSize}
+          height={gridSize}
+          style={StyleSheet.absoluteFill}
+          pointerEvents="none"
+        >
           {/* Render completed paths */}
           {paths.map((path, index) => (
             <Path
