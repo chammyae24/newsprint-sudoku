@@ -59,6 +59,12 @@
     "tailwind-merge": "^3.4.0",
     "zustand": "^5.0.11"
   },
+  "overrides": {
+    "@tensorflow/tfjs-react-native": {
+      "@react-native-async-storage/async-storage": "$@react-native-async-storage/async-storage",
+      "expo-gl": "$expo-gl"
+    }
+  },
   "devDependencies": {
     "@testing-library/react-native": "^13.3.3",
     "@types/jest": "^30.0.0",
