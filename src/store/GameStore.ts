@@ -947,11 +947,43 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
           )
         : undefined;
 
+      let nextFastSolveDigit = fastSolveDigit;
+      if (isCorrect && !isWon) {
+        let currentCount = 0;
+        newGrid.forEach((r) =>
+          r.forEach((c) => {
+            if (c.value === fastSolveDigit) currentCount++;
+          })
+        );
+
+        if (currentCount >= 9) {
+          // Find next available digit from 1-9
+          for (let d = 1; d <= 9; d++) {
+            let dCount = 0;
+            newGrid.forEach((r) =>
+              r.forEach((c) => {
+                if (c.value === d) dCount++;
+              })
+            );
+            if (dCount < 9) {
+              nextFastSolveDigit = d;
+              break;
+            }
+          }
+          if (currentCount >= 9 && nextFastSolveDigit === fastSolveDigit) {
+            nextFastSolveDigit = null; // No incomplete digit found
+          }
+        }
+      }
+
       return {
         grid: newGrid,
         mistakes: newMistakes,
         isGameOver: newIsGameOver,
         isGameWon: isWon,
+        ...(nextFastSolveDigit !== fastSolveDigit && {
+          fastSolveDigit: nextFastSolveDigit,
+        }),
         undoStack: [...state.undoStack, undoPoint],
         redoStack: [],
         moveHistory: [

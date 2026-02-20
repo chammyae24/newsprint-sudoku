@@ -115,6 +115,23 @@ export function Keypad() {
               >
                 {digit}
               </Text>
+              {!isCompleted && 9 - digitCounts[digit] > 0 && (
+                <View
+                  style={[
+                    styles.badgeContainer,
+                    isActive && styles.badgeContainerActive,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.badgeText,
+                      isActive && styles.badgeTextActive,
+                    ]}
+                  >
+                    {9 - digitCounts[digit]}
+                  </Text>
+                </View>
+              )}
             </Pressable>
           );
         })}
@@ -192,5 +209,31 @@ const styles = StyleSheet.create({
   },
   keyTextActive: {
     color: '#FDF8F0',
+  },
+  badgeContainer: {
+    position: 'absolute',
+    top: -6,
+    right: -6,
+    backgroundColor: '#F5EDE0',
+    borderRadius: 8,
+    minWidth: 16,
+    height: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#2A2118',
+  },
+  badgeContainerActive: {
+    backgroundColor: '#FDF8F0',
+    borderColor: '#5A1010',
+  },
+  badgeText: {
+    fontFamily: 'SpecialElite_400Regular',
+    fontSize: 9,
+    lineHeight: 11,
+    color: '#2A2118',
+  },
+  badgeTextActive: {
+    color: '#7A1515',
   },
 });
