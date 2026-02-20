@@ -1,6 +1,10 @@
-import React, { useState } from 'react';
+import * as MediaLibrary from 'expo-media-library';
+import * as Sharing from 'expo-sharing';
+import React, { useRef, useState } from 'react';
 import {
+  Alert,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -14,6 +18,8 @@ import {
   TechniqueType,
 } from '../../core/types';
 import { useGameStore } from '../../store/GameStore';
+import { captureView } from '../../utils/imageCapture';
+import { StaticBoard } from './StaticBoard';
 
 interface MoveHistoryReviewProps {
   visible: boolean;
@@ -89,6 +95,73 @@ export function MoveHistoryReview({
     return TECHNIQUE_CATEGORIES[technique] || TechniqueCategory.BASIC;
   };
 
+  const viewShotRef = useRef<View>(null);
+
+  const handleShare = async () => {
+    try {
+      if (viewShotRef.current) {
+        const uri = await captureView(viewShotRef);
+        if (Platform.OS === 'web') {
+          // Allow sharing on web if supported, else fallback to alerting/downloading
+          const isAvailable = await Sharing.isAvailableAsync();
+          if (isAvailable) {
+            try {
+              await Sharing.shareAsync(uri);
+              return;
+            } catch (e) {
+              // Ignore failure, fall back to alert
+            }
+          }
+          Alert.alert(
+            'Not Supported',
+            'Native sharing might not be available on web in this browser. Try downloading the image instead.'
+          );
+          return;
+        }
+
+        const isAvailableNative = await Sharing.isAvailableAsync();
+        if (isAvailableNative) {
+          await Sharing.shareAsync(uri);
+        } else {
+          Alert.alert('Error', 'Sharing is not available on this device');
+        }
+      }
+    } catch (error) {
+      console.error('Failed to share', error);
+      Alert.alert('Error', 'Failed to share image');
+    }
+  };
+
+  const handleDownload = async () => {
+    try {
+      if (viewShotRef.current) {
+        const uri = await captureView(viewShotRef);
+
+        if (Platform.OS === 'web') {
+          // For web workaround, view-shot returns base64 or blob URI
+          const link = document.createElement('a');
+          link.href = uri;
+          link.download = 'sudoku-victory.png';
+          link.click();
+        } else {
+          const { status } = await MediaLibrary.requestPermissionsAsync();
+          if (status !== 'granted') {
+            Alert.alert(
+              'Permission needed',
+              'Please grant permission to save photos'
+            );
+            return;
+          }
+          await MediaLibrary.saveToLibraryAsync(uri);
+          Alert.alert('Success', 'Saved to your photos!');
+        }
+      }
+    } catch (error) {
+      console.error('Failed to save', error);
+      Alert.alert('Error', 'Failed to save image');
+    }
+  };
+
   return (
     <Modal
       transparent
@@ -98,187 +171,231 @@ export function MoveHistoryReview({
     >
       <View style={styles.overlay}>
         <View style={styles.modal}>
-          {/* Header */}
-          <View style={styles.header}>
-            <View style={styles.headerRow}>
-              <Text style={styles.headerTitle}>
-                {isGameWon ? '📰 Victory Edition' : '📊 Game Summary'}
-              </Text>
-              <Pressable onPress={onClose} style={styles.closeButton}>
-                <Text style={styles.closeText}>✕</Text>
-              </Pressable>
-            </View>
-          </View>
-
-          {/* Statistics */}
-          <View style={styles.statsRow}>
-            <View style={styles.statItem}>
-              <Text style={styles.statValue}>{formatTime(elapsedSeconds)}</Text>
-              <Text style={styles.statLabel}>Time</Text>
-            </View>
-            <View style={styles.statItem}>
-              <Text style={styles.statValue}>{accuracy}%</Text>
-              <Text style={styles.statLabel}>Accuracy</Text>
-            </View>
-            <View style={styles.statItem}>
-              <Text style={styles.statValue}>{totalMoves}</Text>
-              <Text style={styles.statLabel}>Moves</Text>
-            </View>
-            <View style={styles.statItem}>
-              <Text
-                style={[styles.statValue, mistakes > 0 && { color: '#A02020' }]}
-              >
-                {mistakes}
-              </Text>
-              <Text style={styles.statLabel}>Errors</Text>
-            </View>
-          </View>
-
-          {/* Technique Stats */}
-          <View style={styles.techniqueSection}>
-            <Text style={styles.techniqueTitle}>Techniques Used</Text>
-            <View style={styles.techniqueRow}>
-              <View style={styles.techniqueItem}>
-                <View style={[styles.dot, { backgroundColor: '#B09A6E' }]} />
-                <Text style={styles.techniqueText}>
-                  Basic: {techniqueStats[TechniqueCategory.BASIC]}
-                </Text>
-              </View>
-              <View style={styles.techniqueItem}>
-                <View style={[styles.dot, { backgroundColor: '#8B7355' }]} />
-                <Text style={styles.techniqueText}>
-                  Intermediate: {techniqueStats[TechniqueCategory.INTERMEDIATE]}
-                </Text>
-              </View>
-              <View style={styles.techniqueItem}>
-                <View style={[styles.dot, { backgroundColor: '#4A3828' }]} />
-                <Text style={styles.techniqueText}>
-                  Advanced: {techniqueStats[TechniqueCategory.ADVANCED]}
-                </Text>
-              </View>
-            </View>
-          </View>
-
-          {/* Move History */}
-          <View style={styles.historySection}>
-            <Text style={styles.historyTitle}>Move History</Text>
-            <ScrollView
-              style={styles.scrollView}
-              showsVerticalScrollIndicator={false}
+          <ScrollView
+            style={styles.scrollContainer}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.scrollContent}
+          >
+            <View
+              ref={viewShotRef}
+              collapsable={false}
+              style={{ backgroundColor: '#F5EDE0', paddingBottom: 16 }} // Ensure background matches modal
             >
-              {moveHistory.length === 0 ? (
-                <Text style={styles.emptyText}>No moves recorded</Text>
-              ) : (
-                moveHistory.map((move, index) => {
-                  const category = move.technique
-                    ? getTechniqueCategory(move.technique)
-                    : null;
-                  const catStyle = category ? getCategoryStyle(category) : null;
-                  const isExpanded = expandedMoveIndex === index;
+              {/* Header */}
+              <View style={styles.header}>
+                <View style={styles.headerRow}>
+                  <Text style={styles.headerTitle}>
+                    {isGameWon ? '📰 Victory Edition' : '📊 Game Summary'}
+                  </Text>
+                  {!isGameWon && (
+                    <Pressable onPress={onClose} style={styles.closeButton}>
+                      <Text style={styles.closeText}>✕</Text>
+                    </Pressable>
+                  )}
+                </View>
+              </View>
 
-                  return (
-                    <Pressable
-                      key={index}
-                      onPress={() =>
-                        setExpandedMoveIndex(isExpanded ? null : index)
-                      }
-                    >
-                      <View
-                        style={[
-                          styles.moveItem,
-                          {
-                            backgroundColor: move.wasCorrect
-                              ? '#EDE3D0'
-                              : 'rgba(160, 32, 32, 0.08)',
-                          },
-                        ]}
+              {/* Statistics */}
+              <View style={styles.statsRow}>
+                <View style={styles.statItem}>
+                  <Text style={styles.statValue}>
+                    {formatTime(elapsedSeconds)}
+                  </Text>
+                  <Text style={styles.statLabel}>Time</Text>
+                </View>
+                <View style={styles.statItem}>
+                  <Text style={styles.statValue}>{accuracy}%</Text>
+                  <Text style={styles.statLabel}>Accuracy</Text>
+                </View>
+                <View style={styles.statItem}>
+                  <Text style={styles.statValue}>{totalMoves}</Text>
+                  <Text style={styles.statLabel}>Moves</Text>
+                </View>
+                <View style={styles.statItem}>
+                  <Text
+                    style={[
+                      styles.statValue,
+                      mistakes > 0 && { color: '#A02020' },
+                    ]}
+                  >
+                    {mistakes}
+                  </Text>
+                  <Text style={styles.statLabel}>Errors</Text>
+                </View>
+              </View>
+
+              {/* Board for Winning state */}
+              {isGameWon && (
+                <View style={styles.boardSection}>
+                  <StaticBoard />
+                </View>
+              )}
+
+              {/* Technique Stats */}
+              <View style={styles.techniqueSection}>
+                <Text style={styles.techniqueTitle}>Techniques Used</Text>
+                <View style={styles.techniqueRow}>
+                  <View style={styles.techniqueItem}>
+                    <View
+                      style={[styles.dot, { backgroundColor: '#B09A6E' }]}
+                    />
+                    <Text style={styles.techniqueText}>
+                      Basic: {techniqueStats[TechniqueCategory.BASIC]}
+                    </Text>
+                  </View>
+                  <View style={styles.techniqueItem}>
+                    <View
+                      style={[styles.dot, { backgroundColor: '#8B7355' }]}
+                    />
+                    <Text style={styles.techniqueText}>
+                      Intermediate:{' '}
+                      {techniqueStats[TechniqueCategory.INTERMEDIATE]}
+                    </Text>
+                  </View>
+                  <View style={styles.techniqueItem}>
+                    <View
+                      style={[styles.dot, { backgroundColor: '#4A3828' }]}
+                    />
+                    <Text style={styles.techniqueText}>
+                      Advanced: {techniqueStats[TechniqueCategory.ADVANCED]}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+            </View>
+
+            {/* Actions for Win State */}
+            {isGameWon && (
+              <View style={styles.actionSection}>
+                <Pressable style={styles.actionBtn} onPress={handleShare}>
+                  <Text style={styles.actionBtnText}>🔗 Share</Text>
+                </Pressable>
+                <Pressable style={styles.actionBtn} onPress={handleDownload}>
+                  <Text style={styles.actionBtnText}>💾 Save Image</Text>
+                </Pressable>
+              </View>
+            )}
+
+            {/* Move History */}
+            <View style={styles.historySection}>
+              <Text style={styles.historyTitle}>Move History</Text>
+              <View style={styles.historyList}>
+                {moveHistory.length === 0 ? (
+                  <Text style={styles.emptyText}>No moves recorded</Text>
+                ) : (
+                  moveHistory.map((move, index) => {
+                    const category = move.technique
+                      ? getTechniqueCategory(move.technique)
+                      : null;
+                    const catStyle = category
+                      ? getCategoryStyle(category)
+                      : null;
+                    const isExpanded = expandedMoveIndex === index;
+
+                    return (
+                      <Pressable
+                        key={index}
+                        onPress={() =>
+                          setExpandedMoveIndex(isExpanded ? null : index)
+                        }
                       >
-                        <View style={styles.moveRow}>
-                          {/* Move number */}
-                          <View style={styles.moveNumber}>
-                            <Text style={styles.moveNumberText}>
-                              {index + 1}
-                            </Text>
-                          </View>
+                        <View
+                          style={[
+                            styles.moveItem,
+                            {
+                              backgroundColor: move.wasCorrect
+                                ? '#EDE3D0'
+                                : 'rgba(160, 32, 32, 0.08)',
+                            },
+                          ]}
+                        >
+                          <View style={styles.moveRow}>
+                            {/* Move number */}
+                            <View style={styles.moveNumber}>
+                              <Text style={styles.moveNumberText}>
+                                {index + 1}
+                              </Text>
+                            </View>
 
-                          {/* Move details */}
-                          <View style={styles.moveDetails}>
-                            <Text style={styles.moveText}>
-                              {move.type === 'elimination' ? (
-                                <>
-                                  Removed Note{' '}
-                                  <Text style={styles.moveValueElim}>
-                                    {move.value}
-                                  </Text>
-                                </>
-                              ) : (
-                                <>
-                                  Placed{' '}
-                                  <Text style={styles.moveValue}>
-                                    {move.value}
-                                  </Text>
-                                </>
-                              )}{' '}
-                              at R{move.row + 1}C{move.col + 1}
-                            </Text>
-                            {move.technique && catStyle && (
-                              <View style={styles.badgeContainer}>
-                                <View
-                                  style={[
-                                    styles.badge,
-                                    { backgroundColor: catStyle.bg },
-                                  ]}
-                                >
-                                  <Text
+                            {/* Move details */}
+                            <View style={styles.moveDetails}>
+                              <Text style={styles.moveText}>
+                                {move.type === 'elimination' ? (
+                                  <>
+                                    Removed Note{' '}
+                                    <Text style={styles.moveValueElim}>
+                                      {move.value}
+                                    </Text>
+                                  </>
+                                ) : (
+                                  <>
+                                    Placed{' '}
+                                    <Text style={styles.moveValue}>
+                                      {move.value}
+                                    </Text>
+                                  </>
+                                )}{' '}
+                                at R{move.row + 1}C{move.col + 1}
+                              </Text>
+                              {move.technique && catStyle && (
+                                <View style={styles.badgeContainer}>
+                                  <View
                                     style={[
-                                      styles.badgeText,
-                                      { color: catStyle.text },
+                                      styles.badge,
+                                      { backgroundColor: catStyle.bg },
                                     ]}
                                   >
-                                    {move.technique}
-                                  </Text>
+                                    <Text
+                                      style={[
+                                        styles.badgeText,
+                                        { color: catStyle.text },
+                                      ]}
+                                    >
+                                      {move.technique}
+                                    </Text>
+                                  </View>
                                 </View>
-                              </View>
-                            )}
+                              )}
+                            </View>
+
+                            {/* Time & status */}
+                            <View style={styles.moveStatus}>
+                              <Text style={styles.moveTime}>
+                                {formatMoveTime(move, index)}
+                              </Text>
+                              <Text
+                                style={[
+                                  styles.moveResult,
+                                  {
+                                    color: move.wasCorrect
+                                      ? '#4A7A4A'
+                                      : '#A02020',
+                                  },
+                                ]}
+                              >
+                                {move.wasCorrect ? '✓' : '✗'}
+                              </Text>
+                            </View>
                           </View>
 
-                          {/* Time & status */}
-                          <View style={styles.moveStatus}>
-                            <Text style={styles.moveTime}>
-                              {formatMoveTime(move, index)}
-                            </Text>
-                            <Text
-                              style={[
-                                styles.moveResult,
-                                {
-                                  color: move.wasCorrect
-                                    ? '#4A7A4A'
-                                    : '#A02020',
-                                },
-                              ]}
-                            >
-                              {move.wasCorrect ? '✓' : '✗'}
-                            </Text>
-                          </View>
+                          {/* Expanded explanation */}
+                          {isExpanded && move.techniqueExplanation && (
+                            <View style={styles.explanation}>
+                              <Text style={styles.explanationText}>
+                                {move.techniqueExplanation}
+                              </Text>
+                            </View>
+                          )}
                         </View>
+                      </Pressable>
+                    );
+                  })
+                )}
+              </View>
+            </View>
+          </ScrollView>
 
-                        {/* Expanded explanation */}
-                        {isExpanded && move.techniqueExplanation && (
-                          <View style={styles.explanation}>
-                            <Text style={styles.explanationText}>
-                              {move.techniqueExplanation}
-                            </Text>
-                          </View>
-                        )}
-                      </View>
-                    </Pressable>
-                  );
-                })
-              )}
-            </ScrollView>
-          </View>
-
-          {/* Close button */}
+          {/* Close button at bottom */}
           <View style={styles.footer}>
             <Pressable style={styles.closeBtn} onPress={onClose}>
               <Text style={styles.closeBtnText}>Close</Text>
@@ -303,6 +420,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 16,
     borderTopWidth: 3,
     borderTopColor: '#2A2118',
+    overflow: 'hidden',
   },
   header: {
     padding: 20,
@@ -384,9 +502,40 @@ const styles = StyleSheet.create({
     color: '#6B5540',
   },
 
+  // Board
+  boardSection: {
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 0,
+    borderBottomWidth: 1,
+    borderBottomColor: '#D4C5A8',
+  },
+
+  // Actions
+  actionSection: {
+    flexDirection: 'row',
+    padding: 16,
+    gap: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#D4C5A8',
+  },
+  actionBtn: {
+    flex: 1,
+    backgroundColor: '#EDE3D0',
+    paddingVertical: 12,
+    borderRadius: 6,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#C4B08A',
+  },
+  actionBtnText: {
+    fontFamily: 'PlayfairDisplay_700Bold',
+    fontSize: 14,
+    color: '#4A3828',
+  },
+
   // Move history
   historySection: {
-    flex: 1,
     padding: 16,
   },
   historyTitle: {
@@ -395,8 +544,14 @@ const styles = StyleSheet.create({
     color: '#2A2118',
     marginBottom: 12,
   },
-  scrollView: {
+  historyList: {
+    paddingBottom: 16,
+  },
+  scrollContainer: {
     flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 20,
   },
   emptyText: {
     fontFamily: 'Lora_400Regular_Italic',
