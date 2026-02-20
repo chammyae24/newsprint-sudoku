@@ -16,8 +16,17 @@ export default function Root({ children }: PropsWithChildren) {
           content="width=device-width, initial-scale=1, shrink-to-fit=no"
         />
 
-        {/* Link the PWA manifest file. */}
+        {/* PWA Manifest */}
         <link rel="manifest" href="/manifest.json" />
+
+        {/* iOS PWA compatibility */}
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta
+          name="apple-mobile-web-app-status-bar-style"
+          content="black-translucent"
+        />
+        <meta name="apple-mobile-web-app-title" content="Sudoku" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 
         {/* 
           Disable body scrolling on web. This makes ScrollView components work closer to how they do on native. 
