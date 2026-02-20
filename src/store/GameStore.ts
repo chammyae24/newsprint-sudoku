@@ -327,6 +327,14 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
     const isCorrect = cell.solutionValue === value;
 
     set((state) => {
+      // Save undo point
+      const undoPoint = {
+        grid: cloneGrid(state.grid),
+        mistakes: state.mistakes,
+        isGameOver: state.isGameOver,
+        isGameWon: state.isGameWon,
+      };
+
       // Detect technique used with full details (based on the state BEFORE the move)
       // Only run detection if the move is correct
       const techniqueResult = isCorrect
@@ -378,6 +386,8 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
         mistakes: newMistakes,
         isGameOver: newIsGameOver,
         isGameWon: isWon,
+        undoStack: [...state.undoStack, undoPoint],
+        redoStack: [],
         moveHistory: [
           ...state.moveHistory,
           {
@@ -413,6 +423,14 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
     }
 
     set((state) => {
+      // Save undo point
+      const undoPoint = {
+        grid: cloneGrid(state.grid),
+        mistakes: state.mistakes,
+        isGameOver: state.isGameOver,
+        isGameWon: state.isGameWon,
+      };
+
       // Check for note removal (elimination)
       const currentCell = state.grid[row][col];
       const isRemoval = currentCell.notes.includes(value);
@@ -456,6 +474,8 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
 
       return {
         grid: newGrid,
+        undoStack: [...state.undoStack, undoPoint],
+        redoStack: [],
         moveHistory: historyUpdate
           ? [...state.moveHistory, historyUpdate]
           : state.moveHistory,
@@ -484,6 +504,14 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
     }
 
     set((state) => {
+      // Save undo point
+      const undoPoint = {
+        grid: cloneGrid(state.grid),
+        mistakes: state.mistakes,
+        isGameOver: state.isGameOver,
+        isGameWon: state.isGameWon,
+      };
+
       const newGrid = state.grid.map((r, ri) =>
         r.map((c, ci) => {
           if (ri === row && ci === col) {
@@ -493,7 +521,11 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
         })
       );
 
-      return { grid: newGrid };
+      return {
+        grid: newGrid,
+        undoStack: [...state.undoStack, undoPoint],
+        redoStack: [],
+      };
     });
   },
 
@@ -555,6 +587,24 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
 
     // Place the digit visually in the grid without validating
     set((state) => {
+      const isReplacingPending =
+        state.pendingDigit &&
+        state.pendingDigit.row === row &&
+        state.pendingDigit.col === col;
+
+      let newUndoStack = state.undoStack;
+      if (!isReplacingPending) {
+        newUndoStack = [
+          ...state.undoStack,
+          {
+            grid: cloneGrid(state.grid),
+            mistakes: state.mistakes,
+            isGameOver: state.isGameOver,
+            isGameWon: state.isGameWon,
+          },
+        ];
+      }
+
       const newGrid = state.grid.map((r, ri) =>
         r.map((c, ci) => {
           if (ri === row && ci === col) {
@@ -572,6 +622,8 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
         grid: newGrid,
         pendingDigit: { row, col, value },
         selectedCell: { row, col },
+        undoStack: newUndoStack,
+        redoStack: [],
       };
     });
 
@@ -667,21 +719,17 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
     const { pendingDigit } = get();
     if (!pendingDigit) return;
 
-    const { row, col } = pendingDigit;
-
-    // Remove the digit from the grid — no penalty
+    // Restore the state from before the pending digit
     set((state) => {
-      const newGrid = state.grid.map((r, ri) =>
-        r.map((c, ci) => {
-          if (ri === row && ci === col) {
-            return { ...c, value: null };
-          }
-          return c;
-        })
-      );
+      if (state.undoStack.length === 0) return state;
+
+      const previousState = state.undoStack[state.undoStack.length - 1];
+      const newUndoStack = state.undoStack.slice(0, -1);
 
       return {
-        grid: newGrid,
+        ...previousState,
+        undoStack: newUndoStack,
+        // keep redoStack as is
         pendingDigit: null,
         gameCompletionPending: false,
         completionTimerSeconds: 0,
@@ -761,6 +809,9 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
             isGameWon: state.isGameWon,
           },
         ],
+        pendingDigit: null,
+        gameCompletionPending: false,
+        completionTimerSeconds: 0,
       };
     });
   },
@@ -788,6 +839,9 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
           },
         ],
         redoStack: newRedoStack,
+        pendingDigit: null,
+        gameCompletionPending: false,
+        completionTimerSeconds: 0,
       };
     });
   },
