@@ -4,9 +4,11 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Difficulty } from '../../src/core/types';
 import { GameStats, loadStatsAsync } from '../../src/storage/statsStorage';
+import { useTheme } from '../../src/ui/hooks/useTheme';
 
 export default function StatsScreen() {
   const router = useRouter();
+  const theme = useTheme();
   const [stats, setStats] = useState<GameStats | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -19,9 +21,11 @@ export default function StatsScreen() {
 
   if (loading || !stats) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.bg }]}>
         <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>Loading Stats...</Text>
+          <Text style={[styles.loadingText, { color: theme.textMuted }]}>
+            Loading Stats...
+          </Text>
         </View>
       </SafeAreaView>
     );
@@ -33,12 +37,14 @@ export default function StatsScreen() {
       : 0;
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.bg }]}>
+      <View style={[styles.header, { borderBottomColor: theme.border }]}>
         <Pressable onPress={() => router.back()} style={styles.backButton}>
-          <Text style={styles.backButtonText}>← BACK</Text>
+          <Text style={[styles.backButtonText, { color: theme.text }]}>
+            ← BACK
+          </Text>
         </Pressable>
-        <Text style={styles.title}>STATISTICS</Text>
+        <Text style={[styles.title, { color: theme.text }]}>STATISTICS</Text>
         <View style={styles.headerRight} />
       </View>
 
@@ -49,14 +55,26 @@ export default function StatsScreen() {
         {/* Overview Strip */}
         <View style={styles.overviewContainer}>
           <View style={styles.overviewItem}>
-            <Text style={styles.overviewValue}>{stats.totalGamesPlayed}</Text>
-            <Text style={styles.overviewLabel}>PLAYED</Text>
-            <View style={styles.separator} />
+            <Text style={[styles.overviewValue, { color: theme.text }]}>
+              {stats.totalGamesPlayed}
+            </Text>
+            <Text style={[styles.overviewLabel, { color: theme.textMuted }]}>
+              PLAYED
+            </Text>
+            <View
+              style={[styles.separator, { backgroundColor: theme.borderLight }]}
+            />
           </View>
           <View style={styles.overviewItem}>
-            <Text style={styles.overviewValue}>{winRate}%</Text>
-            <Text style={styles.overviewLabel}>WIN RATE</Text>
-            <View style={styles.separator} />
+            <Text style={[styles.overviewValue, { color: theme.text }]}>
+              {winRate}%
+            </Text>
+            <Text style={[styles.overviewLabel, { color: theme.textMuted }]}>
+              WIN RATE
+            </Text>
+            <View
+              style={[styles.separator, { backgroundColor: theme.borderLight }]}
+            />
           </View>
           <View style={styles.overviewItem}>
             <Text style={styles.overviewValue}>

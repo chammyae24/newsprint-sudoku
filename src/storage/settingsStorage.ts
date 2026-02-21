@@ -1,13 +1,14 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
+import type { ThemeName } from '../ui/theme';
 
 export interface GameSettings {
   soundEnabled: boolean;
   hapticsEnabled: boolean;
   showTimer: boolean;
   highlightPeers: boolean;
-  autoRemoveNotes: boolean; // New feature for Phase 5
-  darkMode: boolean; // Future proofing, though we have a fixed theme for now
+  autoRemoveNotes: boolean;
+  theme: ThemeName;
 }
 
 const DEFAULT_SETTINGS: GameSettings = {
@@ -16,7 +17,7 @@ const DEFAULT_SETTINGS: GameSettings = {
   showTimer: true,
   highlightPeers: true,
   autoRemoveNotes: true,
-  darkMode: false,
+  theme: 'morning',
 };
 
 const SETTINGS_KEY = 'newsprint_sudoku_settings';
@@ -28,6 +29,7 @@ interface SettingsStore extends GameSettings {
   toggleTimer: () => void;
   toggleHighlightPeers: () => void;
   toggleAutoRemoveNotes: () => void;
+  setTheme: (theme: ThemeName) => void;
   loadSettings: () => Promise<void>;
 }
 
@@ -64,11 +66,21 @@ export const useSettingsStore = create<SettingsStore>((set, get) => ({
     saveSettingsAsync({ ...get(), autoRemoveNotes: newVal });
   },
 
+  setTheme: (theme: ThemeName) => {
+    set({ theme });
+    saveSettingsAsync({ ...get(), theme });
+  },
+
   loadSettings: async () => {
     try {
       const json = await AsyncStorage.getItem(SETTINGS_KEY);
       if (json) {
         const saved = JSON.parse(json);
+        // Migrate old darkMode -> theme
+        if (saved.darkMode !== undefined && saved.theme === undefined) {
+          saved.theme = saved.darkMode ? 'evening' : 'morning';
+          delete saved.darkMode;
+        }
         set({ ...DEFAULT_SETTINGS, ...saved });
       }
     } catch (e) {
@@ -85,7 +97,7 @@ async function saveSettingsAsync(settings: GameSettings) {
       showTimer: settings.showTimer,
       highlightPeers: settings.highlightPeers,
       autoRemoveNotes: settings.autoRemoveNotes,
-      darkMode: settings.darkMode,
+      theme: settings.theme,
     });
     await AsyncStorage.setItem(SETTINGS_KEY, json);
   } catch (e) {

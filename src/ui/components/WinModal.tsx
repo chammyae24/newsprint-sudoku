@@ -8,10 +8,17 @@ import {
   Text,
   View,
 } from 'react-native';
+import type { Difficulty } from '../../core/types';
+import type { AchievementDef } from '../../storage/achievementsStorage';
 
 interface WinModalProps {
   visible: boolean;
   elapsedSeconds: number;
+  difficulty: Difficulty;
+  mistakes: number;
+  currentStreak: number;
+  isPersonalBest: boolean;
+  newAchievements: AchievementDef[];
   onNewGame: () => void;
   onGoHome: () => void;
   onShowStats: () => void;
@@ -24,15 +31,30 @@ const CONFETTI_COLORS = [
   '#D4C5A8',
   '#6B5540',
   '#C4B08A',
+  '#edb942ff',
 ];
 const CONFETTI_COUNT = 50;
 
+const DIFFICULTY_LABELS: Record<string, string> = {
+  EASY: 'Easy',
+  MEDIUM: 'Medium',
+  HARD: 'Hard',
+  EXPERT: 'Expert',
+  MASTER: 'Master',
+};
+
 /**
- * Victory modal — "EXTRA EXTRA" newspaper headline style.
+ * Victory modal — "EXTRA EXTRA" newspaper headline style
+ * with streak, personal best, difficulty, and achievement callouts.
  */
 export const WinModal: React.FC<WinModalProps> = ({
   visible,
   elapsedSeconds,
+  difficulty,
+  mistakes,
+  currentStreak,
+  isPersonalBest,
+  newAchievements,
   onNewGame,
   onGoHome,
   onShowStats,
@@ -131,12 +153,67 @@ export const WinModal: React.FC<WinModalProps> = ({
             style={[styles.modalContent, { transform: [{ scale: scaleAnim }] }]}
           >
             <Text style={styles.extraExtra}>EXTRA! EXTRA!</Text>
+
+            {/* Difficulty badge */}
+            <View style={styles.difficultyBadge}>
+              <Text style={styles.difficultyText}>
+                {DIFFICULTY_LABELS[difficulty] || difficulty}
+              </Text>
+            </View>
+
             <View style={styles.headline}>
               <Text style={styles.headlineText}>PUZZLE SOLVED!</Text>
             </View>
+
             <Text style={styles.subtitle}>
               Completed in {formatTime(elapsedSeconds)}
             </Text>
+
+            {/* Callouts row */}
+            <View style={styles.calloutsRow}>
+              {/* Perfect game */}
+              {mistakes === 0 && (
+                <View style={styles.calloutBadge}>
+                  <Text style={styles.calloutText}>⭐ Flawless!</Text>
+                </View>
+              )}
+
+              {/* Personal best */}
+              {isPersonalBest && (
+                <View style={[styles.calloutBadge, styles.calloutBest]}>
+                  <Text style={styles.calloutText}>🏅 Personal Best!</Text>
+                </View>
+              )}
+            </View>
+
+            {/* Streak */}
+            {currentStreak >= 2 && (
+              <View style={styles.streakContainer}>
+                <Text style={styles.streakText}>
+                  🔥 {currentStreak} wins in a row!
+                </Text>
+              </View>
+            )}
+
+            {/* Newly unlocked achievements */}
+            {newAchievements.length > 0 && (
+              <View style={styles.achievementsContainer}>
+                <Text style={styles.achievementsLabel}>
+                  🏆 ACHIEVEMENTS UNLOCKED
+                </Text>
+                {newAchievements.map((a) => (
+                  <View key={a.id} style={styles.achievementRow}>
+                    <Text style={styles.achievementIcon}>{a.icon}</Text>
+                    <View style={styles.achievementTextCol}>
+                      <Text style={styles.achievementTitle}>{a.title}</Text>
+                      <Text style={styles.achievementDesc}>
+                        {a.description}
+                      </Text>
+                    </View>
+                  </View>
+                ))}
+              </View>
+            )}
 
             <View style={styles.divider} />
 
@@ -195,12 +272,25 @@ const styles = StyleSheet.create({
     letterSpacing: 4,
     marginBottom: 8,
   },
+  difficultyBadge: {
+    backgroundColor: '#2A2118',
+    paddingHorizontal: 12,
+    paddingVertical: 3,
+    borderRadius: 10,
+    marginBottom: 8,
+  },
+  difficultyText: {
+    fontFamily: 'SpecialElite_400Regular',
+    fontSize: 11,
+    color: '#edb942ff',
+    letterSpacing: 1,
+  },
   headline: {
     borderTopWidth: 3,
     borderBottomWidth: 3,
     borderColor: '#2A2118',
     paddingVertical: 8,
-    marginBottom: 12,
+    marginBottom: 8,
     width: '100%',
     alignItems: 'center',
   },
@@ -214,13 +304,91 @@ const styles = StyleSheet.create({
     fontFamily: 'Lora_400Regular_Italic',
     fontSize: 15,
     color: '#8B7355',
-    marginBottom: 8,
+    marginBottom: 6,
   },
+
+  // Callouts
+  calloutsRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 4,
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+  },
+  calloutBadge: {
+    backgroundColor: '#FDF0C8',
+    borderWidth: 1,
+    borderColor: '#edb942ff',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  calloutBest: {
+    backgroundColor: '#E8F0E8',
+    borderColor: '#5A9A5A',
+  },
+  calloutText: {
+    fontFamily: 'SpecialElite_400Regular',
+    fontSize: 11,
+    color: '#2A2118',
+  },
+
+  // Streak
+  streakContainer: {
+    marginTop: 4,
+    marginBottom: 4,
+  },
+  streakText: {
+    fontFamily: 'PlayfairDisplay_700Bold',
+    fontSize: 14,
+    color: '#A02020',
+    textAlign: 'center',
+  },
+
+  // Achievements
+  achievementsContainer: {
+    width: '100%',
+    marginTop: 8,
+    backgroundColor: '#2A2118',
+    borderRadius: 6,
+    padding: 10,
+  },
+  achievementsLabel: {
+    fontFamily: 'SpecialElite_400Regular',
+    fontSize: 9,
+    color: '#edb942ff',
+    letterSpacing: 2,
+    marginBottom: 6,
+    textAlign: 'center',
+  },
+  achievementRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  achievementIcon: {
+    fontSize: 18,
+    marginRight: 8,
+  },
+  achievementTextCol: {
+    flex: 1,
+  },
+  achievementTitle: {
+    fontFamily: 'PlayfairDisplay_700Bold',
+    fontSize: 13,
+    color: '#F5EDE0',
+  },
+  achievementDesc: {
+    fontFamily: 'Lora_400Regular_Italic',
+    fontSize: 10,
+    color: '#D4C5A8',
+  },
+
   divider: {
     width: '80%',
     height: 1,
     backgroundColor: '#C4B08A',
-    marginVertical: 16,
+    marginVertical: 12,
   },
   buttons: {
     gap: 10,

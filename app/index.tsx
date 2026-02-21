@@ -13,6 +13,7 @@ import {
 } from '../src/storage/gameStorage';
 import { useGameStore } from '../src/store/GameStore';
 import { LevelSelector } from '../src/ui/components/LevelSelector';
+import { useTheme } from '../src/ui/hooks/useTheme';
 
 // --- Ransom-note title letter data ---
 const TITLE_LINE1 = [
@@ -78,6 +79,7 @@ function RansomLetter({
 
 export default function HomeScreen() {
   const router = useRouter();
+  const theme = useTheme();
   const newGame = useGameStore((state) => state.newGame);
   const resumeGame = useGameStore((state) => state.resumeGame);
   const [hasSaved, setHasSaved] = useState(false);
@@ -138,7 +140,7 @@ export default function HomeScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.bg }]}>
       {/* Layer 1: Title (Always Centered) */}
       <View style={styles.centeredLayer} pointerEvents="none">
         <View style={styles.titleContainer}>
@@ -163,10 +165,20 @@ export default function HomeScreen() {
             onPress={handleDailyChallenge}
             style={({ pressed }) => [
               styles.tornPaperButton,
-              pressed && styles.tornPaperButtonPressed,
+              {
+                backgroundColor: theme.surface,
+                borderColor: theme.border,
+                borderBottomColor: theme.text,
+              },
+              pressed && [
+                styles.tornPaperButtonPressed,
+                { backgroundColor: theme.surfaceAlt },
+              ],
             ]}
           >
-            <Text style={styles.buttonTitle}>TODAY'S PUZZLE</Text>
+            <Text style={[styles.buttonTitle, { color: theme.text }]}>
+              TODAY'S PUZZLE
+            </Text>
             {dailyCompleted && (
               <Text style={styles.completedBadge}>✅ Completed</Text>
             )}
@@ -177,10 +189,18 @@ export default function HomeScreen() {
             onPress={handleStartOrResume}
             style={({ pressed }) => [
               styles.tornPaperButton,
-              pressed && styles.tornPaperButtonPressed,
+              {
+                backgroundColor: theme.surface,
+                borderColor: theme.border,
+                borderBottomColor: theme.text,
+              },
+              pressed && [
+                styles.tornPaperButtonPressed,
+                { backgroundColor: theme.surfaceAlt },
+              ],
             ]}
           >
-            <Text style={styles.buttonTitle}>
+            <Text style={[styles.buttonTitle, { color: theme.text }]}>
               {hasSaved ? 'RESUME GAME' : 'NEW PUZZLE'}
             </Text>
           </Pressable>
@@ -191,16 +211,38 @@ export default function HomeScreen() {
               onPress={handleNewGame}
               style={({ pressed }) => [
                 styles.tornPaperButton,
-                pressed && styles.tornPaperButtonPressed,
+                {
+                  backgroundColor: theme.surface,
+                  borderColor: theme.border,
+                  borderBottomColor: theme.text,
+                },
+                pressed && [
+                  styles.tornPaperButtonPressed,
+                  { backgroundColor: theme.surfaceAlt },
+                ],
               ]}
             >
-              <Text style={styles.buttonTitle}>NEW GAME</Text>
+              <Text style={[styles.buttonTitle, { color: theme.text }]}>
+                NEW GAME
+              </Text>
             </Pressable>
           )}
         </View>
       </View>
 
-      {/* Stats Button - Top Right (Inner) */}
+      {/* Achievements Button - Top Right (Innermost) */}
+      <Pressable
+        onPress={() => router.push('/achievements' as any)}
+        style={({ pressed }) => [
+          styles.cornerButton,
+          styles.achievementsButtonPosition,
+          pressed && styles.cornerButtonPressed,
+        ]}
+      >
+        <Text style={styles.emojiText}>🏆</Text>
+      </Pressable>
+
+      {/* Stats Button - Top Right (Middle) */}
       <Pressable
         onPress={() => router.push('/stats' as any)}
         style={({ pressed }) => [
@@ -348,6 +390,9 @@ const styles = StyleSheet.create({
   cornerButtonPressed: {
     transform: [{ scale: 0.95 }, { translateY: 2 }],
     borderBottomWidth: 2,
+  },
+  achievementsButtonPosition: {
+    right: 136,
   },
   statsButtonPosition: {
     right: 80,

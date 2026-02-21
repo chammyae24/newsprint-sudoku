@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   AppState,
   Platform,
@@ -12,10 +12,19 @@ import {
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Difficulty } from '../../src/core/types';
+import {
+  AchievementDef,
+  checkAndUnlockAchievements,
+} from '../../src/storage/achievementsStorage';
+import { getDailyStreakAsync } from '../../src/storage/dailyStorage';
 import { clearSavedGame, saveGameState } from '../../src/storage/gameStorage';
 import { useSettingsStore } from '../../src/storage/settingsStorage';
-import { recordGameResult } from '../../src/storage/statsStorage';
+import {
+  loadStatsAsync,
+  recordGameResult,
+} from '../../src/storage/statsStorage';
 import { useGameStore } from '../../src/store/GameStore';
+import { AchievementBanner } from '../../src/ui/components/AchievementBanner';
 import { BoardDrawingOverlay } from '../../src/ui/components/BoardDrawingOverlay';
 import { Cell } from '../../src/ui/components/Cell';
 import { CompletionTimer } from '../../src/ui/components/CompletionTimer';
@@ -28,6 +37,7 @@ import { LoseModal } from '../../src/ui/components/LoseModal';
 import { MoveHistoryReview } from '../../src/ui/components/MoveHistoryReview';
 import { PauseOverlay } from '../../src/ui/components/PauseOverlay';
 import { WinModal } from '../../src/ui/components/WinModal';
+import { useTheme } from '../../src/ui/hooks/useTheme';
 import { haptics } from '../../src/utils/haptics';
 
 const DIFFICULTY_LABELS: Record<string, string> = {
@@ -40,6 +50,7 @@ const DIFFICULTY_LABELS: Record<string, string> = {
 
 export default function GameScreen() {
   const router = useRouter();
+  const theme = useTheme();
   const grid = useGameStore((state) => state.grid);
   const difficulty = useGameStore((state) => state.difficulty);
   const newGame = useGameStore((state) => state.newGame);
@@ -73,6 +84,16 @@ export default function GameScreen() {
   const [showStats, setShowStats] = React.useState(false);
   const appState = useRef(AppState.currentState);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Achievement state
+  const [achievementQueue, setAchievementQueue] = useState<AchievementDef[]>(
+    []
+  );
+  const [currentAchievement, setCurrentAchievement] =
+    useState<AchievementDef | null>(null);
+  const [newAchievements, setNewAchievements] = useState<AchievementDef[]>([]);
+  const [currentStreak, setCurrentStreak] = useState(0);
+  const [isPersonalBest, setIsPersonalBest] = useState(false);
 
   // Timer effect
   useEffect(() => {
@@ -136,16 +157,46 @@ export default function GameScreen() {
     return () => clearTimeout(timeout);
   }, [grid, mistakes, selectedCell]);
 
-  // Clear saved game on completion and record stats
+  // Clear saved game on completion and record stats + achievements
   useEffect(() => {
     if (isGameWon || isGameOver) {
       clearSavedGame();
+
+      const gameState = useGameStore.getState();
+
+      // Record game result first
       recordGameResult({
         difficulty,
         won: isGameWon,
         elapsedSeconds,
         mistakes,
-        moveHistory: useGameStore.getState().moveHistory,
+        moveHistory: gameState.moveHistory,
+      }).then(async () => {
+        // Then check achievements with updated stats
+        const updatedStats = await loadStatsAsync();
+        setCurrentStreak(updatedStats.currentWinStreak);
+
+        // Check personal best
+        if (isGameWon) {
+          const ds = updatedStats.byDifficulty[difficulty];
+          if (ds && ds.bestTime === elapsedSeconds) {
+            setIsPersonalBest(true);
+          }
+        }
+
+        const dailyStreak = await getDailyStreakAsync();
+        const unlocked = await checkAndUnlockAchievements({
+          won: isGameWon,
+          difficulty,
+          elapsedSeconds,
+          mistakes,
+          stats: updatedStats,
+          dailyStreak,
+        });
+        if (unlocked.length > 0) {
+          setNewAchievements(unlocked);
+          setAchievementQueue(unlocked);
+        }
       });
     }
   }, [isGameWon, isGameOver]);
@@ -192,8 +243,21 @@ export default function GameScreen() {
     return '✕';
   });
 
+  // Process achievement queue — show one banner at a time
+  useEffect(() => {
+    if (achievementQueue.length > 0 && !currentAchievement) {
+      setCurrentAchievement(achievementQueue[0]);
+      setAchievementQueue((prev) => prev.slice(1));
+    }
+  }, [achievementQueue, currentAchievement]);
+
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.bg }]}>
+      {/* Achievement Banner */}
+      <AchievementBanner
+        achievement={currentAchievement}
+        onDismiss={() => setCurrentAchievement(null)}
+      />
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -204,9 +268,16 @@ export default function GameScreen() {
         <CompletionTimer />
         {/* Header */}
         <View style={styles.header}>
-          <View style={styles.difficultyBadge}>
-            <Text style={styles.difficultyLabel}>LEVEL</Text>
-            <Text style={styles.difficultyValue}>
+          <View
+            style={[
+              styles.difficultyBadge,
+              { backgroundColor: theme.headerBg },
+            ]}
+          >
+            <Text style={[styles.difficultyLabel, { color: theme.textMuted }]}>
+              LEVEL
+            </Text>
+            <Text style={[styles.difficultyValue, { color: theme.headerText }]}>
               {DIFFICULTY_LABELS[difficulty] || difficulty}
             </Text>
           </View>
@@ -250,7 +321,13 @@ export default function GameScreen() {
         <View style={styles.gridWrapper}>
           <Animated.View
             entering={FadeInDown.delay(300).springify().damping(12)}
-            style={styles.gridBorder}
+            style={[
+              styles.gridBorder,
+              {
+                backgroundColor: theme.cellBg,
+                borderColor: theme.gridLineMajor,
+              },
+            ]}
           >
             {grid.map((row, rowIndex) => (
               <View key={rowIndex} style={styles.gridRow}>
@@ -388,6 +465,11 @@ export default function GameScreen() {
       <WinModal
         visible={isGameWon && !showStats && !showLevelSelector}
         elapsedSeconds={elapsedSeconds}
+        difficulty={difficulty}
+        mistakes={mistakes}
+        currentStreak={currentStreak}
+        isPersonalBest={isPersonalBest}
+        newAchievements={newAchievements}
         onNewGame={handleNewGame}
         onGoHome={handleGoHome}
         onShowStats={() => setShowStats(true)}
