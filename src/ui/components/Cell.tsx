@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
+  withDelay,
   withSequence,
   withSpring,
   withTiming,
@@ -38,6 +39,10 @@ export function Cell({ row, col, cell }: CellProps) {
   const highlightPeers = useSettingsStore((state) => state.highlightPeers);
   const inputMode = useGameStore((state) => state.inputMode);
   const toggleNote = useGameStore((state) => state.toggleNote);
+  const completedCells = useGameStore((state) => state.completedCells);
+  const clearCompletedCells = useGameStore(
+    (state) => state.clearCompletedCells
+  );
 
   const isSelected = selectedCell?.row === row && selectedCell?.col === col;
   const isSameRow = selectedCell?.row === row;
@@ -119,6 +124,34 @@ export function Cell({ row, col, cell }: CellProps) {
   const animatedContainerStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: translateX.value }],
   }));
+
+  // --- Completion animation (gold flash) ---
+  const completionGlow = useSharedValue(0);
+  const cellKey = `${row},${col}`;
+  const completionDelay = completedCells[cellKey];
+
+  useEffect(() => {
+    if (completionDelay !== undefined) {
+      completionGlow.value = withDelay(
+        completionDelay,
+        withSequence(
+          withTiming(1, { duration: 200 }),
+          withTiming(0.3, { duration: 300 }),
+          withTiming(0.6, { duration: 200 }),
+          withTiming(0, { duration: 400 })
+        )
+      );
+
+      // Find the max delay to know when to clear
+      const maxDelay = Math.max(...Object.values(completedCells));
+      if (completionDelay === maxDelay) {
+        // Last cell in animation — clear after it finishes
+        const totalDuration = maxDelay + 1100; // sum of animation durations
+        const timer = setTimeout(() => clearCompletedCells(), totalDuration);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [completionDelay, completedCells]);
 
   // --- Background color based on state (themed) ---
   let bgColor = theme.cellBg;
@@ -242,6 +275,19 @@ export function Cell({ row, col, cell }: CellProps) {
       ]}
       onPress={handlePress}
     >
+      {/* Completion glow overlay */}
+      <Animated.View
+        style={[
+          StyleSheet.absoluteFill,
+          {
+            backgroundColor: theme.accent,
+          },
+          useAnimatedStyle(() => ({
+            opacity: completionGlow.value * 0.5,
+          })),
+        ]}
+        pointerEvents="none"
+      />
       {cell.value !== null ? (
         <AnimatedText
           style={[

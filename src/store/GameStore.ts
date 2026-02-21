@@ -75,6 +75,9 @@ interface GameState {
 
   // Move History
   moveHistory: MoveRecord[];
+
+  // Completion animation: Map of "row,col" → stagger delay (ms)
+  completedCells: Record<string, number>;
 }
 
 interface GameActions {
@@ -138,6 +141,9 @@ interface GameActions {
   // Highlighting
   setHighlightDigit: (digit: number | null) => void;
 
+  // Completion animation
+  clearCompletedCells: () => void;
+
   // Daily Challenge
   startDailyChallenge: () => void;
 }
@@ -151,6 +157,73 @@ const createEmptyGrid = (): SudokuCell[][] =>
       solutionValue: 0,
     }))
   );
+
+/**
+ * Check if placing a value at (row, col) completes any row, column, or box.
+ * Returns a Record<"r,c", delayMs> for cells to animate.
+ */
+function checkGroupCompletion(
+  grid: SudokuCell[][],
+  row: number,
+  col: number
+): Record<string, number> {
+  const result: Record<string, number> = {};
+  let groupIndex = 0;
+
+  // Check row
+  const rowComplete = grid[row].every(
+    (c) => c.value !== null && c.value === c.solutionValue
+  );
+  if (rowComplete) {
+    for (let c = 0; c < 9; c++) {
+      const key = `${row},${c}`;
+      result[key] = groupIndex * 9 * 40 + c * 40; // stagger 40ms per cell
+    }
+    groupIndex++;
+  }
+
+  // Check column
+  const colComplete = grid.every(
+    (r) => r[col].value !== null && r[col].value === r[col].solutionValue
+  );
+  if (colComplete) {
+    for (let r = 0; r < 9; r++) {
+      const key = `${r},${col}`;
+      if (!(key in result)) {
+        result[key] = groupIndex * 9 * 40 + r * 40;
+      }
+    }
+    groupIndex++;
+  }
+
+  // Check 3x3 box
+  const boxStartRow = Math.floor(row / 3) * 3;
+  const boxStartCol = Math.floor(col / 3) * 3;
+  let boxComplete = true;
+  for (let r = boxStartRow; r < boxStartRow + 3; r++) {
+    for (let c = boxStartCol; c < boxStartCol + 3; c++) {
+      if (grid[r][c].value !== grid[r][c].solutionValue) {
+        boxComplete = false;
+        break;
+      }
+    }
+    if (!boxComplete) break;
+  }
+  if (boxComplete) {
+    let i = 0;
+    for (let r = boxStartRow; r < boxStartRow + 3; r++) {
+      for (let c = boxStartCol; c < boxStartCol + 3; c++) {
+        const key = `${r},${c}`;
+        if (!(key in result)) {
+          result[key] = groupIndex * 9 * 40 + i * 40;
+        }
+        i++;
+      }
+    }
+  }
+
+  return result;
+}
 
 export const useGameStore = create<GameState & GameActions>((set, get) => ({
   // Initial state
@@ -176,6 +249,7 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
   completionTimerSeconds: 0,
   undoStack: [],
   redoStack: [],
+  completedCells: {},
   moveHistory: [],
 
   // Actions
@@ -415,6 +489,14 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
         ],
       };
     });
+
+    // Detect completed groups for animation
+    if (isCorrect) {
+      const completedCells = checkGroupCompletion(get().grid, row, col);
+      if (Object.keys(completedCells).length > 0) {
+        set({ completedCells });
+      }
+    }
 
     return isCorrect;
   },
@@ -725,6 +807,14 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
         ],
       };
     });
+
+    // Detect completed groups for animation
+    if (isCorrect) {
+      const completedCells = checkGroupCompletion(get().grid, row, col);
+      if (Object.keys(completedCells).length > 0) {
+        set({ completedCells });
+      }
+    }
   },
 
   cancelPendingDigit: () => {
@@ -1122,5 +1212,9 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
       // Toggle off if same digit, otherwise set new digit
       highlightDigit: state.highlightDigit === digit ? null : digit,
     }));
+  },
+
+  clearCompletedCells: () => {
+    set({ completedCells: {} });
   },
 }));
