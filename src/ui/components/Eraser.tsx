@@ -2,11 +2,13 @@ import * as Haptics from 'expo-haptics';
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useGameStore } from '../../store/GameStore';
+import { useTheme } from '../hooks/useTheme';
 
 /**
- * Eraser tool — styled as newspaper eraser icon.
+ * Eraser tool — styled as newspaper eraser icon, themed.
  */
 export function Eraser() {
+  const theme = useTheme();
   const selectedCell = useGameStore((state) => state.selectedCell);
   const grid = useGameStore((state) => state.grid);
   const clearCell = useGameStore((state) => state.clearCell);
@@ -49,7 +51,11 @@ export function Eraser() {
     >
       <View style={styles.iconContainer}>
         <View
-          style={[styles.eraserIcon, !canErase && styles.eraserIconDisabled]}
+          style={[
+            styles.eraserIcon,
+            { backgroundColor: theme.accent + '60' },
+            !canErase && { backgroundColor: theme.surfaceAlt },
+          ]}
         >
           <Text style={styles.eraserEmoji}>🧽</Text>
         </View>
@@ -74,23 +80,10 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 8,
-    backgroundColor: '#E8C0A0',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  eraserIconDisabled: {
-    backgroundColor: '#E0D5BF',
-  },
   eraserEmoji: {
     fontSize: 20,
-  },
-  label: {
-    fontFamily: 'SpecialElite_400Regular',
-    fontSize: 10,
-    color: '#2A2118',
-    textAlign: 'center',
-  },
-  labelDisabled: {
-    color: '#A89070',
   },
 });

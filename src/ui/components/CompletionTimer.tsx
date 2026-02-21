@@ -1,9 +1,11 @@
 import React, { useEffect } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInUp, FadeOutUp } from 'react-native-reanimated';
 import { useGameStore } from '../../store/GameStore';
+import { useTheme } from '../hooks/useTheme';
 
 export function CompletionTimer() {
+  const theme = useTheme();
   const gameCompletionPending = useGameStore(
     (state) => state.gameCompletionPending
   );
@@ -12,6 +14,9 @@ export function CompletionTimer() {
   );
   const tickCompletionTimer = useGameStore(
     (state) => state.tickCompletionTimer
+  );
+  const cancelGameCompletion = useGameStore(
+    (state) => state.cancelGameCompletion
   );
 
   useEffect(() => {
@@ -32,10 +37,32 @@ export function CompletionTimer() {
       exiting={FadeOutUp}
       style={styles.container}
     >
-      <View style={styles.card}>
-        <Text style={styles.title}>Game Finishing...</Text>
-        <Text style={styles.timer}>{completionTimerSeconds}</Text>
-        <Text style={styles.subtitle}>Draw to correct!</Text>
+      <View
+        style={[
+          styles.card,
+          {
+            backgroundColor: theme.accent,
+            borderColor: theme.accent + '80',
+          },
+        ]}
+      >
+        <Text style={[styles.title, { color: theme.accentText }]}>
+          Finishing in...
+        </Text>
+        <Text style={[styles.timer, { color: theme.accentText }]}>
+          {completionTimerSeconds}
+        </Text>
+        <Text style={[styles.subtitle, { color: theme.accentText + 'CC' }]}>
+          Draw to correct!
+        </Text>
+        <Pressable
+          style={[styles.dismissBtn, { borderColor: theme.accentText + '40' }]}
+          onPress={cancelGameCompletion}
+        >
+          <Text style={[styles.dismissText, { color: theme.accentText }]}>
+            ✕ Dismiss
+          </Text>
+        </Pressable>
       </View>
     </Animated.View>
   );
@@ -44,15 +71,13 @@ export function CompletionTimer() {
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    top: 100, // Positioned below header
+    top: 100,
     left: 0,
     right: 0,
     alignItems: 'center',
     zIndex: 100,
-    pointerEvents: 'none', // Let touches pass through to grid? Actually we might want touches for cancel button if we had one. But for now, just overlay.
   },
   card: {
-    backgroundColor: '#A02020',
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 12,
@@ -63,23 +88,30 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 8,
     borderWidth: 2,
-    borderColor: '#7A1515',
   },
   title: {
     fontFamily: 'SpecialElite_400Regular',
     fontSize: 16,
-    color: '#F5EDE0',
     marginBottom: 4,
   },
   timer: {
     fontFamily: 'PlayfairDisplay_700Bold',
     fontSize: 32,
-    color: '#F5EDE0',
     marginVertical: 4,
   },
   subtitle: {
     fontFamily: 'Lora_400Regular_Italic',
     fontSize: 14,
-    color: 'rgba(245, 237, 224, 0.8)',
+  },
+  dismissBtn: {
+    marginTop: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderRadius: 4,
+    borderWidth: 1,
+  },
+  dismissText: {
+    fontFamily: 'SpecialElite_400Regular',
+    fontSize: 12,
   },
 });

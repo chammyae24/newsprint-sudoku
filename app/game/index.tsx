@@ -283,8 +283,16 @@ export default function GameScreen() {
           </View>
           <Pressable onPress={() => pause()} style={styles.headerCenter}>
             {showTimer && (
-              <View style={styles.timerStrip}>
-                <Text style={styles.timerText}>
+              <View
+                style={[
+                  styles.timerStrip,
+                  {
+                    backgroundColor: theme.surfaceAlt,
+                    borderColor: theme.borderLight,
+                  },
+                ]}
+              >
+                <Text style={[styles.timerText, { color: theme.text }]}>
                   ⏱️ {formatTime(elapsedSeconds)}
                 </Text>
               </View>
@@ -353,11 +361,13 @@ export default function GameScreen() {
         {/* Selected cell info */}
         <View style={styles.selectionInfo}>
           {selectedCell ? (
-            <Text style={styles.selectionText}>
+            <Text style={[styles.selectionText, { color: theme.textMuted }]}>
               Selected: Row {selectedCell.row + 1}, Col {selectedCell.col + 1}
             </Text>
           ) : (
-            <Text style={styles.selectionText}>Tap a cell to select</Text>
+            <Text style={[styles.selectionText, { color: theme.textMuted }]}>
+              Tap a cell to select
+            </Text>
           )}
         </View>
 
@@ -369,13 +379,25 @@ export default function GameScreen() {
           <Pressable
             style={[
               styles.actionButton,
-              !canUndo && styles.actionButtonDisabled,
+              {
+                backgroundColor: theme.surface,
+                borderColor: theme.buttonBorder,
+                borderBottomColor: theme.buttonBorder,
+              },
+              !canUndo && [
+                styles.actionButtonDisabled,
+                { backgroundColor: theme.bg, borderColor: theme.borderLight },
+              ],
             ]}
             onPress={undo}
             disabled={!canUndo}
           >
             <Text
-              style={[styles.actionText, !canUndo && styles.actionTextDisabled]}
+              style={[
+                styles.actionText,
+                { color: theme.text },
+                !canUndo && { color: theme.textMuted },
+              ]}
             >
               ↩️ Undo
             </Text>
@@ -384,13 +406,25 @@ export default function GameScreen() {
           <Pressable
             style={[
               styles.actionButton,
-              !canRedo && styles.actionButtonDisabled,
+              {
+                backgroundColor: theme.surface,
+                borderColor: theme.buttonBorder,
+                borderBottomColor: theme.buttonBorder,
+              },
+              !canRedo && [
+                styles.actionButtonDisabled,
+                { backgroundColor: theme.bg, borderColor: theme.borderLight },
+              ],
             ]}
             onPress={redo}
             disabled={!canRedo}
           >
             <Text
-              style={[styles.actionText, !canRedo && styles.actionTextDisabled]}
+              style={[
+                styles.actionText,
+                { color: theme.text },
+                !canRedo && { color: theme.textMuted },
+              ]}
             >
               ↪️ Redo
             </Text>
@@ -400,14 +434,23 @@ export default function GameScreen() {
           <Pressable
             style={[
               styles.actionButton,
-              isFastSolveMode && styles.actionButtonActive,
+              {
+                backgroundColor: theme.surface,
+                borderColor: theme.buttonBorder,
+                borderBottomColor: theme.buttonBorder,
+              },
+              isFastSolveMode && [
+                styles.actionButtonActive,
+                { backgroundColor: theme.buttonActiveBg },
+              ],
             ]}
             onPress={() => toggleFastSolveMode()}
           >
             <Text
               style={[
                 styles.actionText,
-                isFastSolveMode && styles.actionTextActive,
+                { color: theme.text },
+                isFastSolveMode && { color: theme.buttonActiveText },
               ]}
             >
               ⚡ {isFastSolveMode ? 'Fast ON' : 'Fast Solve'}
@@ -417,14 +460,23 @@ export default function GameScreen() {
           <Pressable
             style={[
               styles.actionButton,
-              isDrawingMode && styles.actionButtonActive,
+              {
+                backgroundColor: theme.surface,
+                borderColor: theme.buttonBorder,
+                borderBottomColor: theme.buttonBorder,
+              },
+              isDrawingMode && [
+                styles.actionButtonActive,
+                { backgroundColor: theme.buttonActiveBg },
+              ],
             ]}
             onPress={() => toggleDrawingMode()}
           >
             <Text
               style={[
                 styles.actionText,
-                isDrawingMode && styles.actionTextActive,
+                { color: theme.text },
+                isDrawingMode && { color: theme.buttonActiveText },
               ]}
             >
               ✏️ {isDrawingMode ? 'Draw ON' : 'Draw'}
@@ -432,21 +484,51 @@ export default function GameScreen() {
           </Pressable>
 
           <Pressable
-            style={styles.actionButton}
+            style={[
+              styles.actionButton,
+              {
+                backgroundColor: theme.surface,
+                borderColor: theme.buttonBorder,
+                borderBottomColor: theme.buttonBorder,
+              },
+            ]}
             onPress={() => autoFillNotes()}
           >
-            <Text style={styles.actionText}>📝 Notes</Text>
+            <Text style={[styles.actionText, { color: theme.text }]}>
+              📝 Notes
+            </Text>
           </Pressable>
 
           <Pressable
-            style={styles.actionButton}
+            style={[
+              styles.actionButton,
+              {
+                backgroundColor: theme.surface,
+                borderColor: theme.buttonBorder,
+                borderBottomColor: theme.buttonBorder,
+              },
+            ]}
             onPress={() => setShowLevelSelector(true)}
           >
-            <Text style={styles.actionText}>🔄 New</Text>
+            <Text style={[styles.actionText, { color: theme.text }]}>
+              🔄 New
+            </Text>
           </Pressable>
 
-          <Pressable style={styles.actionButton} onPress={() => requestHint()}>
-            <Text style={styles.actionText}>🔍 Hint</Text>
+          <Pressable
+            style={[
+              styles.actionButton,
+              {
+                backgroundColor: theme.surface,
+                borderColor: theme.buttonBorder,
+                borderBottomColor: theme.buttonBorder,
+              },
+            ]}
+            onPress={() => requestHint()}
+          >
+            <Text style={[styles.actionText, { color: theme.text }]}>
+              🔍 Hint
+            </Text>
           </Pressable>
         </View>
       </ScrollView>

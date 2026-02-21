@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import type { Difficulty } from '../../core/types';
 import type { AchievementDef } from '../../storage/achievementsStorage';
+import { useTheme } from '../hooks/useTheme';
 
 interface WinModalProps {
   visible: boolean;
@@ -31,7 +32,7 @@ const CONFETTI_COLORS = [
   '#D4C5A8',
   '#6B5540',
   '#C4B08A',
-  '#edb942ff',
+  '#edb942',
 ];
 const CONFETTI_COUNT = 50;
 
@@ -44,8 +45,8 @@ const DIFFICULTY_LABELS: Record<string, string> = {
 };
 
 /**
- * Victory modal — "EXTRA EXTRA" newspaper headline style
- * with streak, personal best, difficulty, and achievement callouts.
+ * Victory modal — "EXTRA EXTRA" newspaper headline style,
+ * themed with streak, personal best, difficulty, and achievement callouts.
  */
 export const WinModal: React.FC<WinModalProps> = ({
   visible,
@@ -59,6 +60,8 @@ export const WinModal: React.FC<WinModalProps> = ({
   onGoHome,
   onShowStats,
 }) => {
+  const theme = useTheme();
+
   const confettiAnims = useRef(
     Array.from({ length: CONFETTI_COUNT }, () => ({
       translateY: new Animated.Value(-50),
@@ -150,38 +153,71 @@ export const WinModal: React.FC<WinModalProps> = ({
 
           {/* Modal content */}
           <Animated.View
-            style={[styles.modalContent, { transform: [{ scale: scaleAnim }] }]}
+            style={[
+              styles.modalContent,
+              {
+                backgroundColor: theme.surface,
+                borderColor: theme.border,
+                transform: [{ scale: scaleAnim }],
+              },
+            ]}
           >
-            <Text style={styles.extraExtra}>EXTRA! EXTRA!</Text>
+            <Text style={[styles.extraExtra, { color: theme.error }]}>
+              EXTRA! EXTRA!
+            </Text>
 
             {/* Difficulty badge */}
-            <View style={styles.difficultyBadge}>
-              <Text style={styles.difficultyText}>
+            <View
+              style={[
+                styles.difficultyBadge,
+                { backgroundColor: theme.border },
+              ]}
+            >
+              <Text style={[styles.difficultyText, { color: theme.accent }]}>
                 {DIFFICULTY_LABELS[difficulty] || difficulty}
               </Text>
             </View>
 
-            <View style={styles.headline}>
-              <Text style={styles.headlineText}>PUZZLE SOLVED!</Text>
+            <View style={[styles.headline, { borderColor: theme.border }]}>
+              <Text style={[styles.headlineText, { color: theme.text }]}>
+                PUZZLE SOLVED!
+              </Text>
             </View>
 
-            <Text style={styles.subtitle}>
+            <Text style={[styles.subtitle, { color: theme.textMuted }]}>
               Completed in {formatTime(elapsedSeconds)}
             </Text>
 
             {/* Callouts row */}
             <View style={styles.calloutsRow}>
-              {/* Perfect game */}
               {mistakes === 0 && (
-                <View style={styles.calloutBadge}>
-                  <Text style={styles.calloutText}>⭐ Flawless!</Text>
+                <View
+                  style={[
+                    styles.calloutBadge,
+                    {
+                      backgroundColor: theme.accent + '30',
+                      borderColor: theme.accent,
+                    },
+                  ]}
+                >
+                  <Text style={[styles.calloutText, { color: theme.text }]}>
+                    ⭐ Flawless!
+                  </Text>
                 </View>
               )}
-
-              {/* Personal best */}
               {isPersonalBest && (
-                <View style={[styles.calloutBadge, styles.calloutBest]}>
-                  <Text style={styles.calloutText}>🏅 Personal Best!</Text>
+                <View
+                  style={[
+                    styles.calloutBadge,
+                    {
+                      backgroundColor: theme.success + '20',
+                      borderColor: theme.success,
+                    },
+                  ]}
+                >
+                  <Text style={[styles.calloutText, { color: theme.text }]}>
+                    🏅 Personal Best!
+                  </Text>
                 </View>
               )}
             </View>
@@ -189,7 +225,7 @@ export const WinModal: React.FC<WinModalProps> = ({
             {/* Streak */}
             {currentStreak >= 2 && (
               <View style={styles.streakContainer}>
-                <Text style={styles.streakText}>
+                <Text style={[styles.streakText, { color: theme.error }]}>
                   🔥 {currentStreak} wins in a row!
                 </Text>
               </View>
@@ -197,16 +233,35 @@ export const WinModal: React.FC<WinModalProps> = ({
 
             {/* Newly unlocked achievements */}
             {newAchievements.length > 0 && (
-              <View style={styles.achievementsContainer}>
-                <Text style={styles.achievementsLabel}>
+              <View
+                style={[
+                  styles.achievementsContainer,
+                  { backgroundColor: theme.border },
+                ]}
+              >
+                <Text
+                  style={[styles.achievementsLabel, { color: theme.accent }]}
+                >
                   🏆 ACHIEVEMENTS UNLOCKED
                 </Text>
                 {newAchievements.map((a) => (
                   <View key={a.id} style={styles.achievementRow}>
                     <Text style={styles.achievementIcon}>{a.icon}</Text>
                     <View style={styles.achievementTextCol}>
-                      <Text style={styles.achievementTitle}>{a.title}</Text>
-                      <Text style={styles.achievementDesc}>
+                      <Text
+                        style={[
+                          styles.achievementTitle,
+                          { color: theme.surface },
+                        ]}
+                      >
+                        {a.title}
+                      </Text>
+                      <Text
+                        style={[
+                          styles.achievementDesc,
+                          { color: theme.borderLight },
+                        ]}
+                      >
                         {a.description}
                       </Text>
                     </View>
@@ -215,17 +270,58 @@ export const WinModal: React.FC<WinModalProps> = ({
               </View>
             )}
 
-            <View style={styles.divider} />
+            <View
+              style={[styles.divider, { backgroundColor: theme.borderLight }]}
+            />
 
             <View style={styles.buttons}>
-              <Pressable style={styles.statsButton} onPress={onShowStats}>
-                <Text style={styles.statsButtonText}>📊 View Stats</Text>
+              <Pressable
+                style={[
+                  styles.statsButton,
+                  { backgroundColor: theme.textSecondary },
+                ]}
+                onPress={onShowStats}
+              >
+                <Text
+                  style={[styles.statsButtonText, { color: theme.surface }]}
+                >
+                  📊 View Stats
+                </Text>
               </Pressable>
-              <Pressable style={styles.primaryButton} onPress={onNewGame}>
-                <Text style={styles.primaryButtonText}>New Puzzle</Text>
+              <Pressable
+                style={[
+                  styles.primaryButton,
+                  { backgroundColor: theme.buttonBg },
+                ]}
+                onPress={onNewGame}
+              >
+                <Text
+                  style={[
+                    styles.primaryButtonText,
+                    { color: theme.buttonText },
+                  ]}
+                >
+                  New Puzzle
+                </Text>
               </Pressable>
-              <Pressable style={styles.secondaryButton} onPress={onGoHome}>
-                <Text style={styles.secondaryButtonText}>Return Home</Text>
+              <Pressable
+                style={[
+                  styles.secondaryButton,
+                  {
+                    backgroundColor: theme.surfaceAlt,
+                    borderColor: theme.borderLight,
+                  },
+                ]}
+                onPress={onGoHome}
+              >
+                <Text
+                  style={[
+                    styles.secondaryButtonText,
+                    { color: theme.textMuted },
+                  ]}
+                >
+                  Return Home
+                </Text>
               </Pressable>
             </View>
           </Animated.View>
@@ -251,13 +347,11 @@ const styles = StyleSheet.create({
     top: -50,
   },
   modalContent: {
-    backgroundColor: '#F5EDE0',
     borderRadius: 8,
     paddingHorizontal: 40,
     paddingVertical: 32,
     alignItems: 'center',
     borderWidth: 3,
-    borderColor: '#2A2118',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.3,
@@ -268,12 +362,10 @@ const styles = StyleSheet.create({
   extraExtra: {
     fontFamily: 'SpecialElite_400Regular',
     fontSize: 16,
-    color: '#A02020',
     letterSpacing: 4,
     marginBottom: 8,
   },
   difficultyBadge: {
-    backgroundColor: '#2A2118',
     paddingHorizontal: 12,
     paddingVertical: 3,
     borderRadius: 10,
@@ -282,13 +374,11 @@ const styles = StyleSheet.create({
   difficultyText: {
     fontFamily: 'SpecialElite_400Regular',
     fontSize: 11,
-    color: '#edb942ff',
     letterSpacing: 1,
   },
   headline: {
     borderTopWidth: 3,
     borderBottomWidth: 3,
-    borderColor: '#2A2118',
     paddingVertical: 8,
     marginBottom: 8,
     width: '100%',
@@ -297,13 +387,11 @@ const styles = StyleSheet.create({
   headlineText: {
     fontFamily: 'PlayfairDisplay_900Black',
     fontSize: 28,
-    color: '#2A2118',
     textAlign: 'center',
   },
   subtitle: {
     fontFamily: 'Lora_400Regular_Italic',
     fontSize: 15,
-    color: '#8B7355',
     marginBottom: 6,
   },
 
@@ -316,21 +404,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   calloutBadge: {
-    backgroundColor: '#FDF0C8',
     borderWidth: 1,
-    borderColor: '#edb942ff',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
   },
-  calloutBest: {
-    backgroundColor: '#E8F0E8',
-    borderColor: '#5A9A5A',
-  },
   calloutText: {
     fontFamily: 'SpecialElite_400Regular',
     fontSize: 11,
-    color: '#2A2118',
   },
 
   // Streak
@@ -341,7 +422,6 @@ const styles = StyleSheet.create({
   streakText: {
     fontFamily: 'PlayfairDisplay_700Bold',
     fontSize: 14,
-    color: '#A02020',
     textAlign: 'center',
   },
 
@@ -349,14 +429,12 @@ const styles = StyleSheet.create({
   achievementsContainer: {
     width: '100%',
     marginTop: 8,
-    backgroundColor: '#2A2118',
     borderRadius: 6,
     padding: 10,
   },
   achievementsLabel: {
     fontFamily: 'SpecialElite_400Regular',
     fontSize: 9,
-    color: '#edb942ff',
     letterSpacing: 2,
     marginBottom: 6,
     textAlign: 'center',
@@ -376,18 +454,15 @@ const styles = StyleSheet.create({
   achievementTitle: {
     fontFamily: 'PlayfairDisplay_700Bold',
     fontSize: 13,
-    color: '#F5EDE0',
   },
   achievementDesc: {
     fontFamily: 'Lora_400Regular_Italic',
     fontSize: 10,
-    color: '#D4C5A8',
   },
 
   divider: {
     width: '80%',
     height: 1,
-    backgroundColor: '#C4B08A',
     marginVertical: 12,
   },
   buttons: {
@@ -395,7 +470,6 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   primaryButton: {
-    backgroundColor: '#4A3828',
     paddingVertical: 14,
     paddingHorizontal: 32,
     borderRadius: 6,
@@ -403,25 +477,20 @@ const styles = StyleSheet.create({
   },
   primaryButtonText: {
     fontFamily: 'PlayfairDisplay_700Bold',
-    color: '#F5EDE0',
     fontSize: 16,
   },
   secondaryButton: {
-    backgroundColor: '#EDE3D0',
     paddingVertical: 14,
     paddingHorizontal: 32,
     borderRadius: 6,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#D4C5A8',
   },
   secondaryButtonText: {
     fontFamily: 'Lora_400Regular',
-    color: '#8B7355',
     fontSize: 16,
   },
   statsButton: {
-    backgroundColor: '#6B5540',
     paddingVertical: 14,
     paddingHorizontal: 32,
     borderRadius: 6,
@@ -429,7 +498,6 @@ const styles = StyleSheet.create({
   },
   statsButtonText: {
     fontFamily: 'PlayfairDisplay_700Bold',
-    color: '#F5EDE0',
     fontSize: 16,
   },
 });

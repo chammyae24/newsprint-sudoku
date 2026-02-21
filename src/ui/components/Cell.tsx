@@ -11,6 +11,7 @@ import Animated, {
 import type { SudokuCell as SudokuCellType } from '../../core/types';
 import { useSettingsStore } from '../../storage/settingsStorage';
 import { useGameStore } from '../../store/GameStore';
+import { useTheme } from '../hooks/useTheme';
 
 interface CellProps {
   row: number;
@@ -19,9 +20,10 @@ interface CellProps {
 }
 
 /**
- * Individual Sudoku cell — newsprint styled.
+ * Individual Sudoku cell — themed newsprint styled.
  */
 export function Cell({ row, col, cell }: CellProps) {
+  const theme = useTheme();
   const activeHint = useGameStore((state) => state.activeHint);
   const selectedCell = useGameStore((state) => state.selectedCell);
   const selectCell = useGameStore((state) => state.selectCell);
@@ -118,22 +120,22 @@ export function Cell({ row, col, cell }: CellProps) {
     transform: [{ translateX: translateX.value }],
   }));
 
-  // --- Background color based on state ---
-  let bgColor = '#F5EDE0'; // parchment-100
+  // --- Background color based on state (themed) ---
+  let bgColor = theme.cellBg;
   if (isSelected) {
-    bgColor = '#E8D8B8';
+    bgColor = theme.cellSelectedBg;
   } else if (isSameValue) {
-    bgColor = '#DDD0B0';
+    bgColor = theme.cellHighlightBg;
   } else if (isPeer && highlightPeers) {
-    bgColor = '#EDE3D0';
+    bgColor = theme.cellPeerBg;
   }
   if (isFastSolveTarget) {
-    bgColor = '#EDE3D0';
+    bgColor = theme.cellPeerBg;
   }
   // Hint overrides
-  if (isHintPrimary) bgColor = '#E8D5A0';
-  if (isHintSecondary) bgColor = '#EDE0C0';
-  if (hintPlacement !== null) bgColor = '#D5E0C0';
+  if (isHintPrimary) bgColor = theme.accent + '40';
+  if (isHintSecondary) bgColor = theme.accent + '20';
+  if (hintPlacement !== null) bgColor = theme.success + '30';
 
   // Render notes
   const renderNotes = () => {
@@ -163,14 +165,15 @@ export function Cell({ row, col, cell }: CellProps) {
               key={num}
               style={[
                 noteStyles.note,
-                !isEliminated && !isPlacement && { color: '#8B7355' },
+                { color: theme.noteText },
+                !isEliminated && !isPlacement && { color: theme.noteText },
                 isEliminated && {
-                  color: '#A02020',
+                  color: theme.error,
                   fontWeight: '700',
                   textDecorationLine: 'line-through',
                 },
                 isPlacement && {
-                  color: '#3A7A3A',
+                  color: theme.success,
                   fontWeight: '700',
                 },
               ]}
@@ -229,8 +232,11 @@ export function Cell({ row, col, cell }: CellProps) {
           backgroundColor: bgColor,
           borderRightWidth: borderRight,
           borderBottomWidth: borderBottom,
-          borderRightColor: borderRight > 1 ? '#2A2118' : '#C4B08A',
-          borderBottomColor: borderBottom > 1 ? '#2A2118' : '#C4B08A',
+          borderColor: theme.gridLine,
+          borderRightColor:
+            borderRight > 1 ? theme.gridLineMajor : theme.gridLine,
+          borderBottomColor:
+            borderBottom > 1 ? theme.gridLineMajor : theme.gridLine,
         },
         animatedContainerStyle,
       ]}
@@ -240,11 +246,23 @@ export function Cell({ row, col, cell }: CellProps) {
         <AnimatedText
           style={[
             cellStyles.value,
-            cell.isGiven && cellStyles.givenValue,
-            !cell.isGiven && cellStyles.userValue,
-            isPendingDigit && cellStyles.pendingValue,
-            isError && cellStyles.errorValue,
-            hintPlacement === cell.value && cellStyles.hintValue,
+            cell.isGiven && [
+              cellStyles.givenValue,
+              { color: theme.cellGivenText },
+            ],
+            !cell.isGiven && [
+              cellStyles.userValue,
+              { color: theme.cellUserText },
+            ],
+            isPendingDigit && [
+              cellStyles.pendingValue,
+              { color: theme.cellUserText },
+            ],
+            isError && { color: theme.error },
+            hintPlacement === cell.value && {
+              color: theme.success,
+              fontFamily: 'PlayfairDisplay_700Bold',
+            },
             !cell.isGiven && animatedValueStyle,
           ]}
         >
@@ -264,7 +282,6 @@ const cellStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 0.5,
-    borderColor: '#C4B08A',
   },
   value: {
     fontSize: 22,
@@ -274,24 +291,14 @@ const cellStyles = StyleSheet.create({
   },
   givenValue: {
     fontFamily: 'PlayfairDisplay_700Bold',
-    color: '#2A2118',
   },
   userValue: {
     fontFamily: 'GloriaHallelujah_400Regular',
     fontSize: 20,
     lineHeight: 30,
-    color: '#1d1df6ff',
   },
   pendingValue: {
-    color: '#1d1df6ff',
     opacity: 0.45,
-  },
-  errorValue: {
-    color: '#A02020',
-  },
-  hintValue: {
-    fontFamily: 'PlayfairDisplay_700Bold',
-    color: '#3A7A3A',
   },
 });
 
@@ -310,6 +317,5 @@ const noteStyles = StyleSheet.create({
     fontSize: 9,
     lineHeight: 10,
     fontFamily: 'Lora_400Regular',
-    color: '#8B7355',
   },
 });

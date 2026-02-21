@@ -2,8 +2,10 @@ import * as Haptics from 'expo-haptics';
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useGameStore } from '../../store/GameStore';
+import { useTheme } from '../hooks/useTheme';
 
 export function Keypad() {
+  const theme = useTheme();
   const inputMode = useGameStore((state) => state.inputMode);
   const selectedCell = useGameStore((state) => state.selectedCell);
   const grid = useGameStore((state) => state.grid);
@@ -73,14 +75,14 @@ export function Keypad() {
   return (
     <View style={styles.container}>
       {isFastSolveMode && (
-        <Text style={styles.modeText}>
+        <Text style={[styles.modeText, { color: theme.textMuted }]}>
           {fastSolveDigit
             ? `Fast Solve: Tap cells to place ${fastSolveDigit}`
             : 'Select a number to fast solve'}
         </Text>
       )}
       {isDrawingMode && (
-        <Text style={styles.modeText}>
+        <Text style={[styles.modeText, { color: theme.textMuted }]}>
           {highlightDigit
             ? `Highlighting: ${highlightDigit}`
             : 'Tap a number to highlight'}
@@ -101,16 +103,30 @@ export function Keypad() {
               disabled={isCompleted}
               style={({ pressed }) => [
                 styles.key,
-                isCompleted && styles.keyCompleted,
-                isActive && styles.keyActive,
+                {
+                  backgroundColor: theme.buttonBg,
+                  borderColor: theme.buttonBorder,
+                },
+                isCompleted && [
+                  styles.keyCompleted,
+                  {
+                    backgroundColor: theme.surfaceAlt,
+                    borderColor: theme.borderLight,
+                  },
+                ],
+                isActive && [
+                  styles.keyActive,
+                  { backgroundColor: theme.buttonActiveBg },
+                ],
                 pressed && !isCompleted && styles.keyPressed,
               ]}
             >
               <Text
                 style={[
                   styles.keyText,
-                  isCompleted && styles.keyTextCompleted,
-                  isActive && styles.keyTextActive,
+                  { color: theme.buttonText },
+                  isCompleted && { color: theme.textMuted },
+                  isActive && { color: theme.buttonActiveText },
                 ]}
               >
                 {digit}
@@ -119,13 +135,15 @@ export function Keypad() {
                 <View
                   style={[
                     styles.badgeContainer,
-                    isActive && styles.badgeContainerActive,
+                    { backgroundColor: theme.bg, borderColor: theme.border },
+                    isActive && { borderColor: theme.buttonActiveBg },
                   ]}
                 >
                   <Text
                     style={[
                       styles.badgeText,
-                      isActive && styles.badgeTextActive,
+                      { color: theme.text },
+                      isActive && { color: theme.buttonActiveBg },
                     ]}
                   >
                     {9 - digitCounts[digit]}
@@ -149,7 +167,6 @@ const styles = StyleSheet.create({
   modeText: {
     fontFamily: 'Lora_400Regular_Italic',
     fontSize: 12,
-    color: '#8B7355',
     marginBottom: 4,
     textAlign: 'center',
   },
@@ -162,16 +179,11 @@ const styles = StyleSheet.create({
     height: 48,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#422800ff',
     borderRadius: 8,
-    // Thick dark border for clear button appearance
     borderWidth: 2,
-    borderColor: '#2A2118',
     borderBottomWidth: 4,
-    borderBottomColor: '#1A1410',
     borderRightWidth: 3,
-    borderRightColor: '#2A2118',
-    shadowColor: '#2A2118',
+    shadowColor: '#000',
     shadowOffset: { width: 1, height: 3 },
     shadowOpacity: 0.3,
     shadowRadius: 3,
@@ -179,19 +191,13 @@ const styles = StyleSheet.create({
   },
   keyCompleted: {
     opacity: 0.35,
-    backgroundColor: '#EDE3D0',
-    borderColor: '#B09A6E',
-    borderBottomColor: '#B09A6E',
-    borderRightColor: '#B09A6E',
   },
   keyActive: {
-    backgroundColor: '#A02020',
-    borderColor: '#7A1515',
-    borderBottomColor: '#5A1010',
-    borderRightColor: '#7A1515',
+    borderWidth: 2,
+    borderBottomWidth: 4,
+    borderRightWidth: 3,
   },
   keyPressed: {
-    backgroundColor: '#3d2800ff',
     borderBottomWidth: 2,
     borderRightWidth: 2,
     marginTop: 2,
@@ -202,38 +208,21 @@ const styles = StyleSheet.create({
   keyText: {
     fontFamily: 'PlayfairDisplay_700Bold',
     fontSize: 20,
-    color: '#F5EDE0',
-  },
-  keyTextCompleted: {
-    color: '#B09A6E',
-  },
-  keyTextActive: {
-    color: '#FDF8F0',
   },
   badgeContainer: {
     position: 'absolute',
     top: -6,
     right: -6,
-    backgroundColor: '#F5EDE0',
     borderRadius: 8,
     minWidth: 16,
     height: 16,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#2A2118',
-  },
-  badgeContainerActive: {
-    backgroundColor: '#FDF8F0',
-    borderColor: '#5A1010',
   },
   badgeText: {
     fontFamily: 'SpecialElite_400Regular',
     fontSize: 9,
     lineHeight: 11,
-    color: '#2A2118',
-  },
-  badgeTextActive: {
-    color: '#7A1515',
   },
 });

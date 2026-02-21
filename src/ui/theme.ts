@@ -39,6 +39,7 @@ export interface Theme {
   buttonSecondaryText: string;
   buttonActiveBg: string;
   buttonActiveText: string;
+  buttonBorder: string; // Visible border for 3D effect buttons
 
   // Board
   cellBg: string;
@@ -90,6 +91,7 @@ export const MORNING_THEME: Theme = {
   buttonSecondaryText: '#8B7355',
   buttonActiveBg: '#A02020',
   buttonActiveText: '#FDF8F0',
+  buttonBorder: '#2A2118',
 
   cellBg: '#FDF8F0',
   cellGivenText: '#2A2118',
@@ -138,6 +140,7 @@ export const EVENING_THEME: Theme = {
   buttonSecondaryText: '#B0A48A',
   buttonActiveBg: '#D04040',
   buttonActiveText: '#F5EDE0',
+  buttonBorder: '#B0A48A',
 
   cellBg: '#2A2520',
   cellGivenText: '#E8DCC8',
@@ -186,6 +189,7 @@ export const VINTAGE_THEME: Theme = {
   buttonSecondaryText: '#6A6448',
   buttonActiveBg: '#B85C28',
   buttonActiveText: '#F8F0D8',
+  buttonBorder: '#5A5840',
 
   cellBg: '#F8F0D8',
   cellGivenText: '#3A3828',

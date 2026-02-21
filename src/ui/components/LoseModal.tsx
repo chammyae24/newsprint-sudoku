@@ -7,6 +7,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import { useTheme } from '../hooks/useTheme';
 
 interface LoseModalProps {
   visible: boolean;
@@ -16,7 +17,7 @@ interface LoseModalProps {
 }
 
 /**
- * Game over modal — newspaper styled.
+ * Game over modal — newspaper styled, themed.
  */
 export const LoseModal: React.FC<LoseModalProps> = ({
   visible,
@@ -24,6 +25,7 @@ export const LoseModal: React.FC<LoseModalProps> = ({
   onGoHome,
   onShowStats,
 }) => {
+  const theme = useTheme();
   const shakeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0)).current;
 
@@ -73,30 +75,73 @@ export const LoseModal: React.FC<LoseModalProps> = ({
             style={[
               styles.modalContent,
               {
+                backgroundColor: theme.surface,
+                borderColor: theme.border,
                 transform: [{ scale: scaleAnim }, { translateX: shakeAnim }],
               },
             ]}
           >
-            <Text style={styles.stopPress}>— STOP PRESS —</Text>
-            <View style={styles.headline}>
-              <Text style={styles.headlineText}>GAME OVER</Text>
+            <Text style={[styles.stopPress, { color: theme.error }]}>
+              — STOP PRESS —
+            </Text>
+            <View style={[styles.headline, { borderColor: theme.error }]}>
+              <Text style={[styles.headlineText, { color: theme.error }]}>
+                GAME OVER
+              </Text>
             </View>
-            <Text style={styles.subtitle}>You ran out of lives</Text>
-            <Text style={styles.encouragement}>
+            <Text style={[styles.subtitle, { color: theme.text }]}>
+              You ran out of lives
+            </Text>
+            <Text style={[styles.encouragement, { color: theme.textMuted }]}>
               The puzzle remains unsolved... for now.
             </Text>
 
-            <View style={styles.divider} />
+            <View
+              style={[styles.divider, { backgroundColor: theme.borderLight }]}
+            />
 
             <View style={styles.buttons}>
-              <Pressable style={styles.statsButton} onPress={onShowStats}>
-                <Text style={styles.statsButtonText}>📊 View Stats</Text>
+              <Pressable
+                style={[
+                  styles.statsButton,
+                  { backgroundColor: theme.textSecondary },
+                ]}
+                onPress={onShowStats}
+              >
+                <Text
+                  style={[styles.statsButtonText, { color: theme.surface }]}
+                >
+                  📊 View Stats
+                </Text>
               </Pressable>
-              <Pressable style={styles.primaryButton} onPress={onNewGame}>
-                <Text style={styles.primaryButtonText}>Try Again</Text>
+              <Pressable
+                style={[styles.primaryButton, { backgroundColor: theme.error }]}
+                onPress={onNewGame}
+              >
+                <Text
+                  style={[styles.primaryButtonText, { color: theme.surface }]}
+                >
+                  Try Again
+                </Text>
               </Pressable>
-              <Pressable style={styles.secondaryButton} onPress={onGoHome}>
-                <Text style={styles.secondaryButtonText}>Return Home</Text>
+              <Pressable
+                style={[
+                  styles.secondaryButton,
+                  {
+                    backgroundColor: theme.surfaceAlt,
+                    borderColor: theme.borderLight,
+                  },
+                ]}
+                onPress={onGoHome}
+              >
+                <Text
+                  style={[
+                    styles.secondaryButtonText,
+                    { color: theme.textMuted },
+                  ]}
+                >
+                  Return Home
+                </Text>
               </Pressable>
             </View>
           </Animated.View>
@@ -114,13 +159,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalContent: {
-    backgroundColor: '#F5EDE0',
     borderRadius: 8,
     paddingHorizontal: 40,
     paddingVertical: 32,
     alignItems: 'center',
     borderWidth: 3,
-    borderColor: '#2A2118',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.3,
@@ -131,14 +174,12 @@ const styles = StyleSheet.create({
   stopPress: {
     fontFamily: 'SpecialElite_400Regular',
     fontSize: 14,
-    color: '#A02020',
     letterSpacing: 3,
     marginBottom: 8,
   },
   headline: {
     borderTopWidth: 3,
     borderBottomWidth: 3,
-    borderColor: '#A02020',
     paddingVertical: 8,
     marginBottom: 12,
     width: '100%',
@@ -147,25 +188,21 @@ const styles = StyleSheet.create({
   headlineText: {
     fontFamily: 'PlayfairDisplay_900Black',
     fontSize: 28,
-    color: '#A02020',
     textAlign: 'center',
   },
   subtitle: {
     fontFamily: 'Lora_400Regular',
     fontSize: 16,
-    color: '#3A2A1C',
     marginBottom: 4,
   },
   encouragement: {
     fontFamily: 'Lora_400Regular_Italic',
     fontSize: 13,
-    color: '#8B7355',
     marginBottom: 8,
   },
   divider: {
     width: '80%',
     height: 1,
-    backgroundColor: '#C4B08A',
     marginVertical: 16,
   },
   buttons: {
@@ -173,7 +210,6 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   primaryButton: {
-    backgroundColor: '#A02020',
     paddingVertical: 14,
     paddingHorizontal: 32,
     borderRadius: 6,
@@ -181,25 +217,20 @@ const styles = StyleSheet.create({
   },
   primaryButtonText: {
     fontFamily: 'PlayfairDisplay_700Bold',
-    color: '#F5EDE0',
     fontSize: 16,
   },
   secondaryButton: {
-    backgroundColor: '#EDE3D0',
     paddingVertical: 14,
     paddingHorizontal: 32,
     borderRadius: 6,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#D4C5A8',
   },
   secondaryButtonText: {
     fontFamily: 'Lora_400Regular',
-    color: '#8B7355',
     fontSize: 16,
   },
   statsButton: {
-    backgroundColor: '#6B5540',
     paddingVertical: 14,
     paddingHorizontal: 32,
     borderRadius: 6,
@@ -207,7 +238,6 @@ const styles = StyleSheet.create({
   },
   statsButtonText: {
     fontFamily: 'PlayfairDisplay_700Bold',
-    color: '#F5EDE0',
     fontSize: 16,
   },
 });

@@ -2,11 +2,13 @@ import * as Haptics from 'expo-haptics';
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { InputMode, useGameStore } from '../../store/GameStore';
+import { useTheme } from '../hooks/useTheme';
 
 /**
  * Input mode switcher — Solve Pen / Note Pencil with stamp icons.
  */
 export function InputModeSwitcher() {
+  const theme = useTheme();
   const inputMode = useGameStore((state) => state.inputMode);
   const setInputMode = useGameStore((state) => state.setInputMode);
 
@@ -23,16 +25,19 @@ export function InputModeSwitcher() {
       <Pressable
         style={[
           styles.modeButton,
-          inputMode === 'solve' && styles.modeButtonActive,
+          inputMode === 'solve' && [
+            styles.modeButtonActive,
+            { backgroundColor: theme.text + '10' },
+          ],
         ]}
         onPress={() => handleModeChange('solve')}
       >
-        {/* Ink stamp icon representation */}
         <View style={styles.iconContainer}>
           <View
             style={[
               styles.stampIcon,
-              inputMode === 'solve' && styles.stampIconActive,
+              { backgroundColor: theme.borderLight },
+              inputMode === 'solve' && { backgroundColor: theme.buttonBg },
             ]}
           >
             <Text style={styles.stampIconText}>✒️</Text>
@@ -41,7 +46,11 @@ export function InputModeSwitcher() {
         <Text
           style={[
             styles.modeLabel,
-            inputMode === 'solve' && styles.modeLabelActive,
+            { color: theme.textMuted },
+            inputMode === 'solve' && [
+              styles.modeLabelActive,
+              { color: theme.text },
+            ],
           ]}
         >
           SOLVE{'\n'}PEN
@@ -52,7 +61,10 @@ export function InputModeSwitcher() {
       <Pressable
         style={[
           styles.modeButton,
-          inputMode === 'note' && styles.modeButtonActive,
+          inputMode === 'note' && [
+            styles.modeButtonActive,
+            { backgroundColor: theme.text + '10' },
+          ],
         ]}
         onPress={() => handleModeChange('note')}
       >
@@ -60,7 +72,8 @@ export function InputModeSwitcher() {
           <View
             style={[
               styles.stampIcon,
-              inputMode === 'note' && styles.stampIconActive,
+              { backgroundColor: theme.borderLight },
+              inputMode === 'note' && { backgroundColor: theme.buttonBg },
             ]}
           >
             <Text style={styles.stampIconText}>📝</Text>
@@ -69,7 +82,11 @@ export function InputModeSwitcher() {
         <Text
           style={[
             styles.modeLabel,
-            inputMode === 'note' && styles.modeLabelActive,
+            { color: theme.textMuted },
+            inputMode === 'note' && [
+              styles.modeLabelActive,
+              { color: theme.text },
+            ],
           ]}
         >
           NOTE{'\n'}PENCIL
@@ -95,7 +112,6 @@ const styles = StyleSheet.create({
   },
   modeButtonActive: {
     opacity: 1,
-    backgroundColor: 'rgba(42, 33, 24, 0.08)',
   },
   iconContainer: {
     marginBottom: 4,
@@ -104,12 +120,8 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 8,
-    backgroundColor: '#D4C5A8',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  stampIconActive: {
-    backgroundColor: '#4A3828',
   },
   stampIconText: {
     fontSize: 20,
@@ -117,12 +129,10 @@ const styles = StyleSheet.create({
   modeLabel: {
     fontFamily: 'SpecialElite_400Regular',
     fontSize: 10,
-    color: '#8B7355',
     textAlign: 'center',
     lineHeight: 13,
   },
   modeLabelActive: {
-    color: '#2A2118',
     fontWeight: '700',
   },
 });

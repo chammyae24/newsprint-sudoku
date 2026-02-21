@@ -1,6 +1,7 @@
 import * as Haptics from 'expo-haptics';
 import React from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTheme } from '../hooks/useTheme';
 
 interface Candidate {
   digit: number;
@@ -19,7 +20,7 @@ interface InkChooserProps {
 }
 
 /**
- * Popover for selecting a digit when OCR confidence is low — newsprint styled.
+ * Popover for selecting a digit when OCR confidence is low — themed.
  */
 export function InkChooser({
   visible,
@@ -27,6 +28,8 @@ export function InkChooser({
   onSelect,
   onDismiss,
 }: InkChooserProps) {
+  const theme = useTheme();
+
   const handleSelect = async (digit: number) => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     onSelect(digit);
@@ -38,10 +41,16 @@ export function InkChooser({
 
   const getConfidenceStyle = (confidence: number) => {
     if (confidence >= 0.8)
-      return { borderColor: '#4A7A4A', backgroundColor: '#E8EFD0' };
+      return {
+        borderColor: theme.success,
+        backgroundColor: theme.success + '20',
+      };
     if (confidence >= 0.5)
-      return { borderColor: '#B09A6E', backgroundColor: '#EDE3D0' };
-    return { borderColor: '#A02020', backgroundColor: '#F0DDD0' };
+      return {
+        borderColor: theme.accent,
+        backgroundColor: theme.accent + '20',
+      };
+    return { borderColor: theme.error, backgroundColor: theme.error + '20' };
   };
 
   return (
@@ -52,8 +61,15 @@ export function InkChooser({
       onRequestClose={onDismiss}
     >
       <Pressable style={styles.backdrop} onPress={onDismiss}>
-        <View style={styles.card}>
-          <Text style={styles.title}>Did you write...</Text>
+        <View
+          style={[
+            styles.card,
+            { backgroundColor: theme.surface, borderColor: theme.border },
+          ]}
+        >
+          <Text style={[styles.title, { color: theme.textMuted }]}>
+            Did you write...
+          </Text>
 
           <View style={styles.candidatesRow}>
             {sortedCandidates.map(({ digit, confidence }) => {
@@ -64,8 +80,15 @@ export function InkChooser({
                   style={[styles.candidate, confStyle]}
                   onPress={() => handleSelect(digit)}
                 >
-                  <Text style={styles.candidateDigit}>{digit}</Text>
-                  <Text style={styles.candidateConfidence}>
+                  <Text style={[styles.candidateDigit, { color: theme.text }]}>
+                    {digit}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.candidateConfidence,
+                      { color: theme.textMuted },
+                    ]}
+                  >
                     {Math.round(confidence * 100)}%
                   </Text>
                 </Pressable>
@@ -74,7 +97,9 @@ export function InkChooser({
           </View>
 
           <Pressable style={styles.cancelButton} onPress={onDismiss}>
-            <Text style={styles.cancelText}>Cancel</Text>
+            <Text style={[styles.cancelText, { color: theme.textMuted }]}>
+              Cancel
+            </Text>
           </Pressable>
         </View>
       </Pressable>
@@ -93,10 +118,8 @@ const styles = StyleSheet.create({
     marginHorizontal: 40,
     alignItems: 'center',
     borderRadius: 8,
-    backgroundColor: '#F5EDE0',
     padding: 20,
     borderWidth: 2,
-    borderColor: '#2A2118',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
@@ -106,7 +129,6 @@ const styles = StyleSheet.create({
   title: {
     fontFamily: 'Lora_400Regular_Italic',
     fontSize: 15,
-    color: '#8B7355',
     marginBottom: 16,
   },
   candidatesRow: {
@@ -125,12 +147,10 @@ const styles = StyleSheet.create({
   candidateDigit: {
     fontFamily: 'PlayfairDisplay_700Bold',
     fontSize: 24,
-    color: '#2A2118',
   },
   candidateConfidence: {
     fontFamily: 'SpecialElite_400Regular',
     fontSize: 11,
-    color: '#8B7355',
     marginTop: 2,
   },
   cancelButton: {
@@ -140,6 +160,5 @@ const styles = StyleSheet.create({
   cancelText: {
     fontFamily: 'Lora_400Regular',
     fontSize: 14,
-    color: '#8B7355',
   },
 });

@@ -19,6 +19,7 @@ import {
 } from '../../core/types';
 import { useGameStore } from '../../store/GameStore';
 import { captureView } from '../../utils/imageCapture';
+import { useTheme } from '../hooks/useTheme';
 import { StaticBoard } from './StaticBoard';
 
 interface MoveHistoryReviewProps {
@@ -27,26 +28,13 @@ interface MoveHistoryReviewProps {
 }
 
 /**
- * Get colors for technique category badges — newsprint palette
- */
-const getCategoryStyle = (category: TechniqueCategory) => {
-  switch (category) {
-    case TechniqueCategory.BASIC:
-      return { bg: '#EDE3D0', text: '#8B7355', border: '#D4C5A8' };
-    case TechniqueCategory.INTERMEDIATE:
-      return { bg: '#E0D5BF', text: '#6B5540', border: '#C4B08A' };
-    case TechniqueCategory.ADVANCED:
-      return { bg: '#D4C5A8', text: '#4A3828', border: '#B09A6E' };
-  }
-};
-
-/**
- * Displays game statistics and move history — newsprint styled.
+ * Displays game statistics and move history — themed newsprint styled.
  */
 export function MoveHistoryReview({
   visible,
   onClose,
 }: MoveHistoryReviewProps) {
+  const theme = useTheme();
   const moveHistory = useGameStore((state) => state.moveHistory);
   const elapsedSeconds = useGameStore((state) => state.elapsedSeconds);
   const isGameWon = useGameStore((state) => state.isGameWon);
@@ -95,6 +83,32 @@ export function MoveHistoryReview({
     return TECHNIQUE_CATEGORIES[technique] || TechniqueCategory.BASIC;
   };
 
+  /**
+   * Category badge colors — derive from theme
+   */
+  const getCategoryStyle = (category: TechniqueCategory) => {
+    switch (category) {
+      case TechniqueCategory.BASIC:
+        return {
+          bg: theme.surfaceAlt,
+          text: theme.textMuted,
+          border: theme.borderLight,
+        };
+      case TechniqueCategory.INTERMEDIATE:
+        return {
+          bg: theme.borderLight,
+          text: theme.textSecondary,
+          border: theme.borderLight,
+        };
+      case TechniqueCategory.ADVANCED:
+        return {
+          bg: theme.border + '40',
+          text: theme.text,
+          border: theme.border,
+        };
+    }
+  };
+
   const viewShotRef = useRef<View>(null);
 
   const handleShare = async () => {
@@ -102,7 +116,6 @@ export function MoveHistoryReview({
       if (viewShotRef.current) {
         const uri = await captureView(viewShotRef);
         if (Platform.OS === 'web') {
-          // Allow sharing on web if supported, else fallback to alerting/downloading
           const isAvailable = await Sharing.isAvailableAsync();
           if (isAvailable) {
             try {
@@ -138,7 +151,6 @@ export function MoveHistoryReview({
         const uri = await captureView(viewShotRef);
 
         if (Platform.OS === 'web') {
-          // For web workaround, view-shot returns base64 or blob URI
           const link = document.createElement('a');
           link.href = uri;
           link.download = 'sudoku-victory.png';
@@ -170,7 +182,12 @@ export function MoveHistoryReview({
       onRequestClose={onClose}
     >
       <View style={styles.overlay}>
-        <View style={styles.modal}>
+        <View
+          style={[
+            styles.modal,
+            { backgroundColor: theme.bg, borderTopColor: theme.border },
+          ]}
+        >
           <ScrollView
             style={styles.scrollContainer}
             showsVerticalScrollIndicator={false}
@@ -179,84 +196,138 @@ export function MoveHistoryReview({
             <View
               ref={viewShotRef}
               collapsable={false}
-              style={{ backgroundColor: '#F5EDE0', paddingBottom: 16 }} // Ensure background matches modal
+              style={{ backgroundColor: theme.bg, paddingBottom: 16 }}
             >
               {/* Header */}
-              <View style={styles.header}>
+              <View
+                style={[
+                  styles.header,
+                  { borderBottomColor: theme.borderLight },
+                ]}
+              >
                 <View style={styles.headerRow}>
-                  <Text style={styles.headerTitle}>
+                  <Text style={[styles.headerTitle, { color: theme.text }]}>
                     {isGameWon ? '📰 Victory Edition' : '📊 Game Summary'}
                   </Text>
                   {!isGameWon && (
                     <Pressable onPress={onClose} style={styles.closeButton}>
-                      <Text style={styles.closeText}>✕</Text>
+                      <Text
+                        style={[styles.closeText, { color: theme.textMuted }]}
+                      >
+                        ✕
+                      </Text>
                     </Pressable>
                   )}
                 </View>
               </View>
 
               {/* Statistics */}
-              <View style={styles.statsRow}>
+              <View
+                style={[
+                  styles.statsRow,
+                  { borderBottomColor: theme.borderLight },
+                ]}
+              >
                 <View style={styles.statItem}>
-                  <Text style={styles.statValue}>
+                  <Text style={[styles.statValue, { color: theme.text }]}>
                     {formatTime(elapsedSeconds)}
                   </Text>
-                  <Text style={styles.statLabel}>Time</Text>
+                  <Text style={[styles.statLabel, { color: theme.textMuted }]}>
+                    Time
+                  </Text>
                 </View>
                 <View style={styles.statItem}>
-                  <Text style={styles.statValue}>{accuracy}%</Text>
-                  <Text style={styles.statLabel}>Accuracy</Text>
+                  <Text style={[styles.statValue, { color: theme.text }]}>
+                    {accuracy}%
+                  </Text>
+                  <Text style={[styles.statLabel, { color: theme.textMuted }]}>
+                    Accuracy
+                  </Text>
                 </View>
                 <View style={styles.statItem}>
-                  <Text style={styles.statValue}>{totalMoves}</Text>
-                  <Text style={styles.statLabel}>Moves</Text>
+                  <Text style={[styles.statValue, { color: theme.text }]}>
+                    {totalMoves}
+                  </Text>
+                  <Text style={[styles.statLabel, { color: theme.textMuted }]}>
+                    Moves
+                  </Text>
                 </View>
                 <View style={styles.statItem}>
                   <Text
                     style={[
                       styles.statValue,
-                      mistakes > 0 && { color: '#A02020' },
+                      { color: theme.text },
+                      mistakes > 0 && { color: theme.error },
                     ]}
                   >
                     {mistakes}
                   </Text>
-                  <Text style={styles.statLabel}>Errors</Text>
+                  <Text style={[styles.statLabel, { color: theme.textMuted }]}>
+                    Errors
+                  </Text>
                 </View>
               </View>
 
               {/* Board for Winning state */}
               {isGameWon && (
-                <View style={styles.boardSection}>
+                <View
+                  style={[
+                    styles.boardSection,
+                    { borderBottomColor: theme.borderLight },
+                  ]}
+                >
                   <StaticBoard />
                 </View>
               )}
 
               {/* Technique Stats */}
-              <View style={styles.techniqueSection}>
-                <Text style={styles.techniqueTitle}>Techniques Used</Text>
+              <View
+                style={[
+                  styles.techniqueSection,
+                  { borderBottomColor: theme.borderLight },
+                ]}
+              >
+                <Text style={[styles.techniqueTitle, { color: theme.text }]}>
+                  Techniques Used
+                </Text>
                 <View style={styles.techniqueRow}>
                   <View style={styles.techniqueItem}>
                     <View
-                      style={[styles.dot, { backgroundColor: '#B09A6E' }]}
+                      style={[styles.dot, { backgroundColor: theme.accent }]}
                     />
-                    <Text style={styles.techniqueText}>
+                    <Text
+                      style={[
+                        styles.techniqueText,
+                        { color: theme.textSecondary },
+                      ]}
+                    >
                       Basic: {techniqueStats[TechniqueCategory.BASIC]}
                     </Text>
                   </View>
                   <View style={styles.techniqueItem}>
                     <View
-                      style={[styles.dot, { backgroundColor: '#8B7355' }]}
+                      style={[styles.dot, { backgroundColor: theme.textMuted }]}
                     />
-                    <Text style={styles.techniqueText}>
+                    <Text
+                      style={[
+                        styles.techniqueText,
+                        { color: theme.textSecondary },
+                      ]}
+                    >
                       Intermediate:{' '}
                       {techniqueStats[TechniqueCategory.INTERMEDIATE]}
                     </Text>
                   </View>
                   <View style={styles.techniqueItem}>
                     <View
-                      style={[styles.dot, { backgroundColor: '#4A3828' }]}
+                      style={[styles.dot, { backgroundColor: theme.text }]}
                     />
-                    <Text style={styles.techniqueText}>
+                    <Text
+                      style={[
+                        styles.techniqueText,
+                        { color: theme.textSecondary },
+                      ]}
+                    >
                       Advanced: {techniqueStats[TechniqueCategory.ADVANCED]}
                     </Text>
                   </View>
@@ -266,22 +337,53 @@ export function MoveHistoryReview({
 
             {/* Actions for Win State */}
             {isGameWon && (
-              <View style={styles.actionSection}>
-                <Pressable style={styles.actionBtn} onPress={handleShare}>
-                  <Text style={styles.actionBtnText}>🔗 Share</Text>
+              <View
+                style={[
+                  styles.actionSection,
+                  { borderBottomColor: theme.borderLight },
+                ]}
+              >
+                <Pressable
+                  style={[
+                    styles.actionBtn,
+                    {
+                      backgroundColor: theme.surfaceAlt,
+                      borderColor: theme.borderLight,
+                    },
+                  ]}
+                  onPress={handleShare}
+                >
+                  <Text style={[styles.actionBtnText, { color: theme.text }]}>
+                    🔗 Share
+                  </Text>
                 </Pressable>
-                <Pressable style={styles.actionBtn} onPress={handleDownload}>
-                  <Text style={styles.actionBtnText}>💾 Save Image</Text>
+                <Pressable
+                  style={[
+                    styles.actionBtn,
+                    {
+                      backgroundColor: theme.surfaceAlt,
+                      borderColor: theme.borderLight,
+                    },
+                  ]}
+                  onPress={handleDownload}
+                >
+                  <Text style={[styles.actionBtnText, { color: theme.text }]}>
+                    💾 Save Image
+                  </Text>
                 </Pressable>
               </View>
             )}
 
             {/* Move History */}
             <View style={styles.historySection}>
-              <Text style={styles.historyTitle}>Move History</Text>
+              <Text style={[styles.historyTitle, { color: theme.text }]}>
+                Move History
+              </Text>
               <View style={styles.historyList}>
                 {moveHistory.length === 0 ? (
-                  <Text style={styles.emptyText}>No moves recorded</Text>
+                  <Text style={[styles.emptyText, { color: theme.textMuted }]}>
+                    No moves recorded
+                  </Text>
                 ) : (
                   moveHistory.map((move, index) => {
                     const category = move.technique
@@ -304,33 +406,56 @@ export function MoveHistoryReview({
                             styles.moveItem,
                             {
                               backgroundColor: move.wasCorrect
-                                ? '#EDE3D0'
-                                : 'rgba(160, 32, 32, 0.08)',
+                                ? theme.surfaceAlt
+                                : theme.error + '12',
+                              borderColor: theme.borderLight,
                             },
                           ]}
                         >
                           <View style={styles.moveRow}>
                             {/* Move number */}
-                            <View style={styles.moveNumber}>
-                              <Text style={styles.moveNumberText}>
+                            <View
+                              style={[
+                                styles.moveNumber,
+                                { backgroundColor: theme.borderLight },
+                              ]}
+                            >
+                              <Text
+                                style={[
+                                  styles.moveNumberText,
+                                  { color: theme.text },
+                                ]}
+                              >
                                 {index + 1}
                               </Text>
                             </View>
 
                             {/* Move details */}
                             <View style={styles.moveDetails}>
-                              <Text style={styles.moveText}>
+                              <Text
+                                style={[styles.moveText, { color: theme.text }]}
+                              >
                                 {move.type === 'elimination' ? (
                                   <>
                                     Removed Note{' '}
-                                    <Text style={styles.moveValueElim}>
+                                    <Text
+                                      style={[
+                                        styles.moveValueElim,
+                                        { color: theme.error },
+                                      ]}
+                                    >
                                       {move.value}
                                     </Text>
                                   </>
                                 ) : (
                                   <>
                                     Placed{' '}
-                                    <Text style={styles.moveValue}>
+                                    <Text
+                                      style={[
+                                        styles.moveValue,
+                                        { color: theme.text },
+                                      ]}
+                                    >
                                       {move.value}
                                     </Text>
                                   </>
@@ -360,7 +485,12 @@ export function MoveHistoryReview({
 
                             {/* Time & status */}
                             <View style={styles.moveStatus}>
-                              <Text style={styles.moveTime}>
+                              <Text
+                                style={[
+                                  styles.moveTime,
+                                  { color: theme.textMuted },
+                                ]}
+                              >
                                 {formatMoveTime(move, index)}
                               </Text>
                               <Text
@@ -368,8 +498,8 @@ export function MoveHistoryReview({
                                   styles.moveResult,
                                   {
                                     color: move.wasCorrect
-                                      ? '#4A7A4A'
-                                      : '#A02020',
+                                      ? theme.success
+                                      : theme.error,
                                   },
                                 ]}
                               >
@@ -380,8 +510,18 @@ export function MoveHistoryReview({
 
                           {/* Expanded explanation */}
                           {isExpanded && move.techniqueExplanation && (
-                            <View style={styles.explanation}>
-                              <Text style={styles.explanationText}>
+                            <View
+                              style={[
+                                styles.explanation,
+                                { backgroundColor: theme.surface + '80' },
+                              ]}
+                            >
+                              <Text
+                                style={[
+                                  styles.explanationText,
+                                  { color: theme.textSecondary },
+                                ]}
+                              >
                                 {move.techniqueExplanation}
                               </Text>
                             </View>
@@ -396,9 +536,14 @@ export function MoveHistoryReview({
           </ScrollView>
 
           {/* Close button at bottom */}
-          <View style={styles.footer}>
-            <Pressable style={styles.closeBtn} onPress={onClose}>
-              <Text style={styles.closeBtnText}>Close</Text>
+          <View style={[styles.footer, { borderTopColor: theme.borderLight }]}>
+            <Pressable
+              style={[styles.closeBtn, { backgroundColor: theme.buttonBg }]}
+              onPress={onClose}
+            >
+              <Text style={[styles.closeBtnText, { color: theme.buttonText }]}>
+                Close
+              </Text>
             </Pressable>
           </View>
         </View>
@@ -415,17 +560,14 @@ const styles = StyleSheet.create({
   modal: {
     flex: 1,
     marginTop: 80,
-    backgroundColor: '#F5EDE0',
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
     borderTopWidth: 3,
-    borderTopColor: '#2A2118',
     overflow: 'hidden',
   },
   header: {
     padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#D4C5A8',
   },
   headerRow: {
     flexDirection: 'row',
@@ -435,21 +577,18 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontFamily: 'PlayfairDisplay_700Bold',
     fontSize: 22,
-    color: '#2A2118',
   },
   closeButton: {
     padding: 8,
   },
   closeText: {
     fontSize: 20,
-    color: '#8B7355',
   },
 
   // Stats
   statsRow: {
     flexDirection: 'row',
     borderBottomWidth: 1,
-    borderBottomColor: '#D4C5A8',
     padding: 16,
   },
   statItem: {
@@ -459,26 +598,22 @@ const styles = StyleSheet.create({
   statValue: {
     fontFamily: 'PlayfairDisplay_700Bold',
     fontSize: 22,
-    color: '#2A2118',
   },
   statLabel: {
     fontFamily: 'Lora_400Regular',
     fontSize: 11,
-    color: '#8B7355',
     marginTop: 2,
   },
 
   // Technique stats
   techniqueSection: {
     borderBottomWidth: 1,
-    borderBottomColor: '#D4C5A8',
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
   techniqueTitle: {
     fontFamily: 'PlayfairDisplay_700Bold',
     fontSize: 14,
-    color: '#3A2A1C',
     marginBottom: 8,
   },
   techniqueRow: {
@@ -499,7 +634,6 @@ const styles = StyleSheet.create({
   techniqueText: {
     fontFamily: 'Lora_400Regular',
     fontSize: 11,
-    color: '#6B5540',
   },
 
   // Board
@@ -508,7 +642,6 @@ const styles = StyleSheet.create({
     paddingTop: 8,
     paddingBottom: 0,
     borderBottomWidth: 1,
-    borderBottomColor: '#D4C5A8',
   },
 
   // Actions
@@ -517,21 +650,17 @@ const styles = StyleSheet.create({
     padding: 16,
     gap: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#D4C5A8',
   },
   actionBtn: {
     flex: 1,
-    backgroundColor: '#EDE3D0',
     paddingVertical: 12,
     borderRadius: 6,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#C4B08A',
   },
   actionBtnText: {
     fontFamily: 'PlayfairDisplay_700Bold',
     fontSize: 14,
-    color: '#4A3828',
   },
 
   // Move history
@@ -541,7 +670,6 @@ const styles = StyleSheet.create({
   historyTitle: {
     fontFamily: 'PlayfairDisplay_700Bold',
     fontSize: 18,
-    color: '#2A2118',
     marginBottom: 12,
   },
   historyList: {
@@ -556,7 +684,6 @@ const styles = StyleSheet.create({
   emptyText: {
     fontFamily: 'Lora_400Regular_Italic',
     fontSize: 14,
-    color: '#8B7355',
     textAlign: 'center',
     paddingVertical: 32,
   },
@@ -565,7 +692,6 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     padding: 12,
     borderWidth: 1,
-    borderColor: '#D4C5A8',
   },
   moveRow: {
     flexDirection: 'row',
@@ -575,7 +701,6 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: '#D4C5A8',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 10,
@@ -583,7 +708,6 @@ const styles = StyleSheet.create({
   moveNumberText: {
     fontFamily: 'SpecialElite_400Regular',
     fontSize: 12,
-    color: '#4A3828',
   },
   moveDetails: {
     flex: 1,
@@ -591,15 +715,12 @@ const styles = StyleSheet.create({
   moveText: {
     fontFamily: 'Lora_400Regular',
     fontSize: 13,
-    color: '#3A2A1C',
   },
   moveValue: {
     fontFamily: 'PlayfairDisplay_700Bold',
-    color: '#4A3828',
   },
   moveValueElim: {
     fontFamily: 'PlayfairDisplay_700Bold',
-    color: '#A02020',
     textDecorationLine: 'line-through',
   },
   badgeContainer: {
@@ -621,7 +742,6 @@ const styles = StyleSheet.create({
   moveTime: {
     fontFamily: 'SpecialElite_400Regular',
     fontSize: 10,
-    color: '#B09A6E',
   },
   moveResult: {
     fontFamily: 'PlayfairDisplay_700Bold',
@@ -630,31 +750,26 @@ const styles = StyleSheet.create({
   },
   explanation: {
     marginTop: 8,
-    backgroundColor: 'rgba(245, 237, 224, 0.8)',
     borderRadius: 4,
     padding: 8,
   },
   explanationText: {
     fontFamily: 'Lora_400Regular_Italic',
     fontSize: 12,
-    color: '#6B5540',
   },
 
   // Footer
   footer: {
     borderTopWidth: 1,
-    borderTopColor: '#D4C5A8',
     padding: 20,
   },
   closeBtn: {
     alignItems: 'center',
-    backgroundColor: '#4A3828',
     borderRadius: 6,
     paddingVertical: 16,
   },
   closeBtnText: {
     fontFamily: 'PlayfairDisplay_700Bold',
     fontSize: 16,
-    color: '#F5EDE0',
   },
 });

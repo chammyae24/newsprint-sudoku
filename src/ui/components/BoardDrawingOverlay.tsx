@@ -225,21 +225,30 @@ export function BoardDrawingOverlay({
       if (result.confidence > 0.7) {
         // High confidence - place digit directly
         await placeDigit(row, col, result.digit);
-      } else if (result.confidence > 0.3) {
-        // Medium confidence - show ink chooser
-        setPendingCell({ row, col });
-        setInkChooserCandidates(
-          result.allCandidates || [
-            { digit: result.digit, confidence: result.confidence },
-          ]
-        );
-        setShowInkChooser(true);
       } else {
-        // Low confidence - show warning
-        await Haptics.notificationAsync(
-          Haptics.NotificationFeedbackType.Warning
+        // Check if ALL top candidates are below 50%
+        const topCandidates = result.allCandidates || [
+          { digit: result.digit, confidence: result.confidence },
+        ];
+        const allBelowHalf = topCandidates.every(
+          (c: { digit: number; confidence: number }) => c.confidence < 0.5
         );
-        clearDrawing();
+
+        if (allBelowHalf && result.confidence > 0.15) {
+          // All candidates have low confidence — show chooser
+          setPendingCell({ row, col });
+          setInkChooserCandidates(topCandidates);
+          setShowInkChooser(true);
+        } else if (result.confidence >= 0.5) {
+          // Top candidate is decent — place directly
+          await placeDigit(row, col, result.digit);
+        } else {
+          // Very low confidence overall — reject
+          await Haptics.notificationAsync(
+            Haptics.NotificationFeedbackType.Warning
+          );
+          clearDrawing();
+        }
       }
     } catch (error) {
       console.error('Recognition error:', error);

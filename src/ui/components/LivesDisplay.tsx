@@ -1,11 +1,13 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useGameStore } from '../../store/GameStore';
+import { useTheme } from '../hooks/useTheme';
 
 /**
- * Displays remaining lives as hearts — filled or X-crossed.
+ * Displays remaining lives as hearts — filled or X-crossed, themed.
  */
 export const LivesDisplay: React.FC = () => {
+  const theme = useTheme();
   const { mistakes, maxMistakes } = useGameStore();
   const remainingLives = maxMistakes - mistakes;
 
@@ -13,10 +15,18 @@ export const LivesDisplay: React.FC = () => {
     const isFilled = index < remainingLives;
     return (
       <View key={index} style={styles.heartContainer}>
-        <Text style={[styles.heart, isFilled ? styles.filled : styles.lost]}>
-          {isFilled ? '♥' : '♥'}
+        <Text
+          style={[
+            styles.heart,
+            { color: theme.error },
+            !isFilled && { opacity: 0.3 },
+          ]}
+        >
+          ♥
         </Text>
-        {!isFilled && <Text style={styles.cross}>✕</Text>}
+        {!isFilled && (
+          <Text style={[styles.cross, { color: theme.text }]}>✕</Text>
+        )}
       </View>
     );
   });
@@ -46,18 +56,10 @@ const styles = StyleSheet.create({
   heart: {
     fontSize: 22,
   },
-  filled: {
-    color: '#A02020',
-  },
-  lost: {
-    color: '#A02020',
-    opacity: 0.3,
-  },
   cross: {
     position: 'absolute',
     fontSize: 26,
     fontWeight: '700',
-    color: '#2A2118',
     top: -1,
   },
 });

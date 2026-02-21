@@ -8,6 +8,7 @@ import {
   View,
 } from 'react-native';
 import { Difficulty } from '../../core/types';
+import { useTheme } from '../hooks/useTheme';
 
 interface LevelSelectorProps {
   visible: boolean;
@@ -48,13 +49,14 @@ const LEVELS: {
 ];
 
 /**
- * Level selector drawer — newsprint styled.
+ * Level selector drawer — newspaper styled, themed.
  */
 export const LevelSelector: React.FC<LevelSelectorProps> = ({
   visible,
   onClose,
   onSelectLevel,
 }) => {
+  const theme = useTheme();
   const slideAnim = React.useRef(new Animated.Value(300)).current;
 
   React.useEffect(() => {
@@ -87,14 +89,25 @@ export const LevelSelector: React.FC<LevelSelectorProps> = ({
       </Pressable>
 
       <Animated.View
-        style={[styles.drawer, { transform: [{ translateY: slideAnim }] }]}
+        style={[
+          styles.drawer,
+          {
+            backgroundColor: theme.bg,
+            borderTopColor: theme.border,
+            transform: [{ translateY: slideAnim }],
+          },
+        ]}
       >
         {/* Handle */}
         <View style={styles.handleContainer}>
-          <View style={styles.handle} />
+          <View
+            style={[styles.handle, { backgroundColor: theme.borderLight }]}
+          />
         </View>
 
-        <Text style={styles.title}>Select Difficulty</Text>
+        <Text style={[styles.title, { color: theme.text }]}>
+          Select Difficulty
+        </Text>
 
         <View style={styles.levelsContainer}>
           {LEVELS.map((level) => (
@@ -102,21 +115,36 @@ export const LevelSelector: React.FC<LevelSelectorProps> = ({
               key={level.difficulty}
               style={({ pressed }) => [
                 styles.levelButton,
-                pressed && styles.levelButtonPressed,
+                {
+                  backgroundColor: theme.surfaceAlt,
+                  borderColor: theme.borderLight,
+                },
+                pressed && {
+                  backgroundColor: theme.borderLight,
+                  transform: [{ scale: 0.98 }],
+                },
               ]}
               onPress={() => handleSelect(level.difficulty)}
             >
               <View style={styles.levelContent}>
-                <Text style={styles.levelLabel}>{level.label}</Text>
-                <Text style={styles.levelDescription}>{level.description}</Text>
+                <Text style={[styles.levelLabel, { color: theme.text }]}>
+                  {level.label}
+                </Text>
+                <Text
+                  style={[styles.levelDescription, { color: theme.textMuted }]}
+                >
+                  {level.description}
+                </Text>
               </View>
-              <Text style={styles.arrow}>→</Text>
+              <Text style={[styles.arrow, { color: theme.textMuted }]}>→</Text>
             </Pressable>
           ))}
         </View>
 
         <Pressable style={styles.cancelButton} onPress={onClose}>
-          <Text style={styles.cancelText}>Cancel</Text>
+          <Text style={[styles.cancelText, { color: theme.textMuted }]}>
+            Cancel
+          </Text>
         </Pressable>
       </Animated.View>
     </Modal>
@@ -133,13 +161,11 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: '#F5EDE0',
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
     paddingHorizontal: 20,
     paddingBottom: 40,
     borderTopWidth: 3,
-    borderTopColor: '#2A2118',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.15,
@@ -153,13 +179,11 @@ const styles = StyleSheet.create({
   handle: {
     width: 40,
     height: 4,
-    backgroundColor: '#C4B08A',
     borderRadius: 2,
   },
   title: {
     fontSize: 24,
     fontFamily: 'PlayfairDisplay_700Bold',
-    color: '#2A2118',
     textAlign: 'center',
     marginBottom: 20,
   },
@@ -170,17 +194,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#EDE3D0',
     borderRadius: 4,
     borderWidth: 1,
-    borderColor: '#D4C5A8',
     borderBottomWidth: 2,
     paddingVertical: 14,
     paddingHorizontal: 16,
-  },
-  levelButtonPressed: {
-    backgroundColor: '#E0D5BF',
-    transform: [{ scale: 0.98 }],
   },
   levelContent: {
     flex: 1,
@@ -188,17 +206,14 @@ const styles = StyleSheet.create({
   levelLabel: {
     fontSize: 18,
     fontFamily: 'PlayfairDisplay_700Bold',
-    color: '#2A2118',
     marginBottom: 2,
   },
   levelDescription: {
     fontSize: 13,
     fontFamily: 'Lora_400Regular_Italic',
-    color: '#8B7355',
   },
   arrow: {
     fontSize: 20,
-    color: '#8B7355',
     fontFamily: 'PlayfairDisplay_700Bold',
   },
   cancelButton: {
@@ -209,7 +224,6 @@ const styles = StyleSheet.create({
   cancelText: {
     fontSize: 16,
     fontFamily: 'Lora_400Regular',
-    color: '#8B7355',
   },
 });
 

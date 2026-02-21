@@ -7,6 +7,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import { useTheme } from '../hooks/useTheme';
 
 interface PauseOverlayProps {
   visible: boolean;
@@ -19,6 +20,7 @@ export const PauseOverlay: React.FC<PauseOverlayProps> = ({
   onResume,
   onQuit,
 }) => {
+  const theme = useTheme();
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -36,20 +38,52 @@ export const PauseOverlay: React.FC<PauseOverlayProps> = ({
   return (
     <Modal visible={visible} transparent animationType="fade">
       <View style={styles.overlay}>
-        <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
-          <View style={styles.coffeeStain} />
+        <Animated.View
+          style={[
+            styles.content,
+            {
+              opacity: fadeAnim,
+              backgroundColor: theme.surface,
+              borderColor: theme.border,
+            },
+          ]}
+        >
+          <View
+            style={[
+              styles.coffeeStain,
+              { borderColor: theme.textMuted + '30' },
+            ]}
+          />
 
-          <Text style={styles.title}>COFFEE BREAK</Text>
-          <Text style={styles.subtitle}>The puzzle is paused.</Text>
+          <Text style={[styles.title, { color: theme.text }]}>
+            COFFEE BREAK
+          </Text>
+          <Text style={[styles.subtitle, { color: theme.textMuted }]}>
+            The puzzle is paused.
+          </Text>
 
-          <View style={styles.divider} />
+          <View
+            style={[styles.divider, { backgroundColor: theme.borderLight }]}
+          />
 
-          <Pressable style={styles.resumeButton} onPress={onResume}>
-            <Text style={styles.resumeButtonText}>RESUME PUZZLE</Text>
+          <Pressable
+            style={[styles.resumeButton, { backgroundColor: theme.buttonBg }]}
+            onPress={onResume}
+          >
+            <Text
+              style={[styles.resumeButtonText, { color: theme.buttonText }]}
+            >
+              RESUME PUZZLE
+            </Text>
           </Pressable>
 
-          <Pressable style={styles.quitButton} onPress={onQuit}>
-            <Text style={styles.quitButtonText}>QUIT GAME</Text>
+          <Pressable
+            style={[styles.quitButton, { borderColor: theme.borderLight }]}
+            onPress={onQuit}
+          >
+            <Text style={[styles.quitButtonText, { color: theme.textMuted }]}>
+              QUIT GAME
+            </Text>
           </Pressable>
         </Animated.View>
       </View>
@@ -60,19 +94,17 @@ export const PauseOverlay: React.FC<PauseOverlayProps> = ({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(26, 20, 16, 0.85)', // Darker overlay to hide board
+    backgroundColor: 'rgba(26, 20, 16, 0.85)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   content: {
     width: '80%',
     maxWidth: 320,
-    backgroundColor: '#F5EDE0',
     borderRadius: 8,
     padding: 32,
     alignItems: 'center',
     borderWidth: 3,
-    borderColor: '#2A2118',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.3,
@@ -87,31 +119,26 @@ const styles = StyleSheet.create({
     height: 60,
     borderRadius: 30,
     borderWidth: 4,
-    borderColor: 'rgba(139, 115, 85, 0.2)',
     zIndex: -1,
   },
   title: {
     fontFamily: 'PlayfairDisplay_900Black',
     fontSize: 28,
-    color: '#2A2118',
     marginBottom: 8,
     textAlign: 'center',
   },
   subtitle: {
     fontFamily: 'Lora_400Regular_Italic',
     fontSize: 16,
-    color: '#8B7355',
     marginBottom: 24,
     textAlign: 'center',
   },
   divider: {
     width: '60%',
     height: 1,
-    backgroundColor: '#C4B08A',
     marginBottom: 24,
   },
   resumeButton: {
-    backgroundColor: '#4A3828',
     paddingVertical: 14,
     paddingHorizontal: 32,
     borderRadius: 6,
@@ -122,7 +149,6 @@ const styles = StyleSheet.create({
   resumeButtonText: {
     fontFamily: 'PlayfairDisplay_700Bold',
     fontSize: 16,
-    color: '#F5EDE0',
     letterSpacing: 1,
   },
   quitButton: {
@@ -133,11 +159,9 @@ const styles = StyleSheet.create({
     width: '100%',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#D4C5A8',
   },
   quitButtonText: {
     fontFamily: 'SpecialElite_400Regular',
     fontSize: 14,
-    color: '#8B7355',
   },
 });
