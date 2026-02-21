@@ -947,7 +947,7 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
           )
         : undefined;
 
-      let nextFastSolveDigit = fastSolveDigit;
+      let nextFastSolveDigit: number | null = fastSolveDigit;
       if (isCorrect && !isWon) {
         let currentCount = 0;
         newGrid.forEach((r) =>

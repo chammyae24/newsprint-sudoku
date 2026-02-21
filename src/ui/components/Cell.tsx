@@ -34,6 +34,8 @@ export function Cell({ row, col, cell }: CellProps) {
   const highlightDigit = useGameStore((state) => state.highlightDigit);
   const pendingDigit = useGameStore((state) => state.pendingDigit);
   const highlightPeers = useSettingsStore((state) => state.highlightPeers);
+  const inputMode = useGameStore((state) => state.inputMode);
+  const toggleNote = useGameStore((state) => state.toggleNote);
 
   const isSelected = selectedCell?.row === row && selectedCell?.col === col;
   const isSameRow = selectedCell?.row === row;
@@ -197,12 +199,18 @@ export function Cell({ row, col, cell }: CellProps) {
         return;
       }
       if (cell.value === null && !cell.isGiven) {
-        const isCorrect = placeFastSolveDigit(row, col);
-        await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        if (!isCorrect) {
-          await Haptics.notificationAsync(
-            Haptics.NotificationFeedbackType.Error
-          );
+        selectCellAction(row, col);
+        if (inputMode === 'note') {
+          toggleNote(fastSolveDigit);
+          await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        } else {
+          const isCorrect = placeFastSolveDigit(row, col);
+          await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          if (!isCorrect) {
+            await Haptics.notificationAsync(
+              Haptics.NotificationFeedbackType.Error
+            );
+          }
         }
         return;
       }

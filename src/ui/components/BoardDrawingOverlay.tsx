@@ -36,6 +36,7 @@ export function BoardDrawingOverlay({
   const setPendingDigit = useGameStore((state) => state.setPendingDigit);
   const toggleNote = useGameStore((state) => state.toggleNote);
   const selectCell = useGameStore((state) => state.selectCell);
+  const clearCell = useGameStore((state) => state.clearCell);
   const setIsWriting = useGameStore((state) => state.setIsWriting);
 
   const [paths, setPaths] = useState<DrawingPath[]>([]);
@@ -134,6 +135,11 @@ export function BoardDrawingOverlay({
     setIsProcessing(true);
 
     try {
+      // Get FRESH state inside the callback instead of relying on the closure
+      const state = useGameStore.getState();
+      const currentGrid = state.grid;
+      const currentInputMode = state.inputMode;
+
       // Detect which cell was drawn in
       const targetCell = detectCell(allPaths);
       if (!targetCell) {
@@ -143,10 +149,10 @@ export function BoardDrawingOverlay({
       }
 
       const { row, col } = targetCell;
-      const cell = grid[row][col];
+      const cell = currentGrid[row][col];
 
-      // Can't draw on given cells or (in solve mode) cells with values
-      if (cell.isGiven || (inputMode === 'solve' && cell.value !== null)) {
+      // Can't draw on given cells
+      if (cell.isGiven) {
         await Haptics.notificationAsync(
           Haptics.NotificationFeedbackType.Warning
         );
@@ -192,12 +198,25 @@ export function BoardDrawingOverlay({
   };
 
   const placeDigit = async (row: number, col: number, digit: number) => {
+    // Get FRESH state inside the callback
+    const state = useGameStore.getState();
+    const currentInputMode = state.inputMode;
+    const currentGrid = state.grid;
+
     selectCell(row, col);
 
-    if (inputMode === 'solve') {
-      setPendingDigit(row, col, digit);
-      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (currentInputMode === 'solve') {
+      const cell = currentGrid[row][col];
+      // Redraw to clear in solve mode
+      if (cell.value === digit) {
+        clearCell();
+        await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      } else {
+        setPendingDigit(row, col, digit);
+        await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      }
     } else {
+      // Note mode: toggle note handles addition/removal automatically
       toggleNote(digit);
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
@@ -240,28 +259,12 @@ export function BoardDrawingOverlay({
         const col = Math.floor(locationX / cellSize);
         const row = Math.floor(locationY / cellSize);
 
-        // Check bounds and filled cells
-        if (row >= 0 && row < 9 && col >= 0 && col < 9) {
-          const cell = grid[row][col];
-          if (cell.value !== null) {
-            return false;
-          }
-        }
-        return true;
-      },
-      onMoveShouldSetPanResponder: (event) => {
-        const { locationX, locationY } = event.nativeEvent;
-        const col = Math.floor(locationX / cellSize);
-        const row = Math.floor(locationY / cellSize);
+        // We no longer block drawing on filled cells immediately here,
+        // to allow drawing a line to erase them. We will validate in handleDrawingComplete.
 
-        if (row >= 0 && row < 9 && col >= 0 && col < 9) {
-          const cell = grid[row][col];
-          if (cell.value !== null) {
-            return false;
-          }
-        }
         return true;
       },
+      onMoveShouldSetPanResponder: (event) => true,
       onPanResponderGrant: (event) => {
         // @ts-ignore - pointerType
         const pointerType = event.nativeEvent.pointerType || 'touch';
