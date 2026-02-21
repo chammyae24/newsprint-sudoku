@@ -124,6 +124,58 @@ export function BoardDrawingOverlay({
   // Track the active pointer type to prioritize pen
   const activePointerId = useRef<number | null>(null);
 
+  // ── Palm Rejection Config ──
+  const PALM_RADIUS_THRESHOLD = 20; // px – touches with radius above this are likely palms
+  const STATIONARY_TIMEOUT_MS = 150; // ms – touches that don't move within this are rejected
+  const STATIONARY_MOVE_MIN = 5; // px – minimum movement to count as intentional
+  const stationaryTimerRef = useRef<any>(null);
+  const touchStartPosRef = useRef<{ x: number; y: number } | null>(null);
+  const isPalmRejected = useRef(false);
+  // Track all active touches for multi-touch priority
+  const activeTouchesRef = useRef<Map<number, { radius: number }>>(new Map());
+
+  /**
+   * Check if a touch event looks like a palm based on contact area.
+   * Returns true if the touch should be REJECTED.
+   */
+  const isPalmTouch = (event: GestureResponderEvent): boolean => {
+    const ne = event.nativeEvent as any;
+    const radiusX = ne.radiusX ?? ne.touchMajor ?? 0;
+    const radiusY = ne.radiusY ?? ne.touchMinor ?? 0;
+    // If radius info is not available (both 0), don't reject
+    if (radiusX === 0 && radiusY === 0) return false;
+    const maxRadius = Math.max(radiusX, radiusY);
+    return maxRadius > PALM_RADIUS_THRESHOLD;
+  };
+
+  /**
+   * When multiple touches are active, check if this pointer is the smallest
+   * (most likely the intentional fingertip). Returns true if it should be REJECTED.
+   */
+  const isLargerThanActiveTouch = (
+    pointerId: number,
+    radius: number
+  ): boolean => {
+    for (const [id, data] of activeTouchesRef.current.entries()) {
+      if (id !== pointerId && data.radius < radius && data.radius > 0) {
+        // Another touch has a smaller contact area — this one is probably the palm
+        return true;
+      }
+    }
+    return false;
+  };
+
+  /** Cancel in-progress drawing caused by a palm */
+  const cancelPalmDrawing = () => {
+    isPalmRejected.current = true;
+    currentPathRef.current = [];
+    setCurrentPath([]);
+    if (stationaryTimerRef.current) {
+      clearTimeout(stationaryTimerRef.current);
+      stationaryTimerRef.current = null;
+    }
+  };
+
   const getPoint = (event: GestureResponderEvent) => ({
     x: event.nativeEvent.locationX,
     y: event.nativeEvent.locationY,
@@ -252,30 +304,48 @@ export function BoardDrawingOverlay({
       onStartShouldSetPanResponder: (event) => {
         // @ts-ignore - pointerType property availability check
         const pointerType = event.nativeEvent.pointerType || 'touch';
-        // @ts-ignore - pointerId property availability check
-        const pointerId = event.nativeEvent.pointerId;
 
-        const { locationX, locationY } = event.nativeEvent;
-        const col = Math.floor(locationX / cellSize);
-        const row = Math.floor(locationY / cellSize);
-
-        // We no longer block drawing on filled cells immediately here,
-        // to allow drawing a line to erase them. We will validate in handleDrawingComplete.
+        // ── Palm rejection: radius check on initial touch ──
+        if (pointerType !== 'pen' && isPalmTouch(event)) {
+          return false; // Don't even claim this gesture — it's a palm
+        }
 
         return true;
       },
-      onMoveShouldSetPanResponder: (event) => true,
+      onMoveShouldSetPanResponder: (event) => {
+        // @ts-ignore
+        const pointerType = event.nativeEvent.pointerType || 'touch';
+        if (pointerType !== 'pen' && isPalmTouch(event)) {
+          return false;
+        }
+        return true;
+      },
       onPanResponderGrant: (event) => {
         // @ts-ignore - pointerType
         const pointerType = event.nativeEvent.pointerType || 'touch';
         // @ts-ignore - pointerId
         const pointerId = event.nativeEvent.pointerId;
 
+        isPalmRejected.current = false;
+
+        // ── Track touch radius for multi-touch priority ──
+        const ne = event.nativeEvent as any;
+        const radius = Math.max(ne.radiusX ?? 0, ne.radiusY ?? 0);
+        activeTouchesRef.current.set(pointerId ?? 0, { radius });
+
+        // ── Multi-touch: if another smaller touch exists, reject this one ──
+        if (
+          pointerType !== 'pen' &&
+          radius > 0 &&
+          isLargerThanActiveTouch(pointerId ?? 0, radius)
+        ) {
+          cancelPalmDrawing();
+          return;
+        }
+
         // If we found a PEN, and the currently active pointer was NOT a pen (e.g. palm),
         // we should restart.
         if (pointerType === 'pen' && activePointerId.current !== pointerId) {
-          // Reset if taking over?
-          // Actually, Grant usually implies a new gesture start.
           activePointerId.current = pointerId;
         } else if (activePointerId.current === null) {
           activePointerId.current = pointerId;
@@ -291,25 +361,70 @@ export function BoardDrawingOverlay({
         const point = getPoint(event);
         currentPathRef.current = [point];
         setCurrentPath([point]);
+
+        // ── Stationary touch rejection ──
+        // Record start position; if the touch doesn't move enough within
+        // the timeout, cancel it as an accidental palm rest.
+        touchStartPosRef.current = point;
+        if (stationaryTimerRef.current)
+          clearTimeout(stationaryTimerRef.current);
+        if (pointerType !== 'pen') {
+          stationaryTimerRef.current = setTimeout(() => {
+            const startPos = touchStartPosRef.current;
+            const latest = currentPathRef.current;
+            if (startPos && latest.length > 0) {
+              const last = latest[latest.length - 1];
+              const dx = last.x - startPos.x;
+              const dy = last.y - startPos.y;
+              const dist = Math.sqrt(dx * dx + dy * dy);
+              if (dist < STATIONARY_MOVE_MIN) {
+                // Touch barely moved — likely a palm resting
+                cancelPalmDrawing();
+              }
+            }
+            stationaryTimerRef.current = null;
+          }, STATIONARY_TIMEOUT_MS);
+        }
       },
       onPanResponderMove: (event) => {
+        // If already palm-rejected, skip all processing
+        if (isPalmRejected.current) return;
+
         // @ts-ignore
         const pointerType = event.nativeEvent.pointerType || 'touch';
         // @ts-ignore
         const pointerId = event.nativeEvent.pointerId;
 
-        // Palm Rejection: If current active pointer is PEN, ignore TOUCH moves
-        // Note: PanResponder might merge them, but checking ID helps.
-        if (
-          activePointerId.current !== null &&
-          pointerType !== 'pen' && // If this move is NOT pen
-          activePointerId.current !== pointerId // And it's not the active pointer
-        ) {
-          // It's a palm moving while pen is down?
+        // ── Palm Rejection: radius check during move ──
+        if (pointerType !== 'pen' && isPalmTouch(event)) {
+          cancelPalmDrawing();
           return;
         }
 
-        // If it returns to being a pen, make sure we track it?
+        // ── Multi-touch radius update ──
+        const ne = event.nativeEvent as any;
+        const radius = Math.max(ne.radiusX ?? 0, ne.radiusY ?? 0);
+        activeTouchesRef.current.set(pointerId ?? 0, { radius });
+
+        // If another smaller touch exists, reject this one mid-stroke
+        if (
+          pointerType !== 'pen' &&
+          radius > 0 &&
+          isLargerThanActiveTouch(pointerId ?? 0, radius)
+        ) {
+          cancelPalmDrawing();
+          return;
+        }
+
+        // Pen/stylus priority: If current active pointer is PEN, ignore TOUCH moves
+        if (
+          activePointerId.current !== null &&
+          pointerType !== 'pen' &&
+          activePointerId.current !== pointerId
+        ) {
+          return;
+        }
+
         if (pointerType === 'pen') {
           activePointerId.current = pointerId;
         }
@@ -319,17 +434,46 @@ export function BoardDrawingOverlay({
         setCurrentPath((prev) => [...prev, point]);
       },
       onPanResponderTerminationRequest: () => false,
-      onPanResponderRelease: () => handlePanResponderRelease(),
-      onPanResponderTerminate: () => handlePanResponderRelease(),
+      onPanResponderRelease: (event) => {
+        // Clean up multi-touch tracking
+        // @ts-ignore
+        const pointerId = event.nativeEvent.pointerId;
+        activeTouchesRef.current.delete(pointerId ?? 0);
+        handlePanResponderRelease();
+      },
+      onPanResponderTerminate: (event) => {
+        // @ts-ignore
+        const pointerId = event.nativeEvent.pointerId;
+        activeTouchesRef.current.delete(pointerId ?? 0);
+        handlePanResponderRelease();
+      },
     })
   ).current;
 
   const handlePanResponderRelease = () => {
+    // Clean up stationary timer
+    if (stationaryTimerRef.current) {
+      clearTimeout(stationaryTimerRef.current);
+      stationaryTimerRef.current = null;
+    }
+    touchStartPosRef.current = null;
+
     const currentPoints = currentPathRef.current;
     const existingPaths = pathsRef.current;
 
     // Reset active pointer
     activePointerId.current = null;
+
+    // If this stroke was palm-rejected, discard it silently
+    if (isPalmRejected.current) {
+      isPalmRejected.current = false;
+      currentPathRef.current = [];
+      setCurrentPath([]);
+      if (existingPaths.length === 0) {
+        setIsWriting(false);
+      }
+      return;
+    }
 
     if (currentPoints.length > 0) {
       const newPath: DrawingPath = {
@@ -342,7 +486,6 @@ export function BoardDrawingOverlay({
       pathsRef.current = newPaths;
 
       setCurrentPath([]);
-      // setIsWriting(false);
 
       recognitionTimeoutRef.current = setTimeout(() => {
         setIsWriting(false);
