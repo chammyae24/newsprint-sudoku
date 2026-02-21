@@ -49,7 +49,11 @@ export default function RootLayout() {
     <Stack
       screenOptions={{
         headerShown: false,
-        contentStyle: { backgroundColor: '#F5EDE0' },
+        contentStyle: {
+          backgroundColor: '#F5EDE0',
+          // @ts-ignore - web-only style
+          userSelect: 'none',
+        },
       }}
     />
   );

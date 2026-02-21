@@ -201,6 +201,10 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
       elapsedSeconds: 0,
       isPaused: false,
       pendingDigit: null,
+      isFastSolveMode: false,
+      fastSolveDigit: null,
+      isDrawingMode: false,
+      highlightDigit: null,
       undoStack: [],
       redoStack: [],
       moveHistory: [],
@@ -236,6 +240,10 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
       elapsedSeconds: 0,
       isPaused: false,
       pendingDigit: null,
+      isFastSolveMode: false,
+      fastSolveDigit: null,
+      isDrawingMode: false,
+      highlightDigit: null,
       undoStack: [],
       redoStack: [],
       moveHistory: [],
@@ -261,6 +269,10 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
       elapsedSeconds: 0,
       isPaused: false,
       pendingDigit: null,
+      isFastSolveMode: false,
+      fastSolveDigit: null,
+      isDrawingMode: false,
+      highlightDigit: null,
       undoStack: [],
       redoStack: [],
       moveHistory: [],
@@ -728,6 +740,8 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
 
       return {
         ...previousState,
+        mistakes: state.mistakes, // Don't revert mistakes
+        isGameOver: state.isGameOver, // Don't revert game over
         undoStack: newUndoStack,
         // keep redoStack as is
         pendingDigit: null,
@@ -799,6 +813,8 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
 
       return {
         ...previousState,
+        mistakes: state.mistakes, // Don't revert mistakes
+        isGameOver: state.isGameOver, // Don't revert game over
         undoStack: newUndoStack,
         redoStack: [
           ...state.redoStack,
@@ -829,6 +845,8 @@ export const useGameStore = create<GameState & GameActions>((set, get) => ({
 
       return {
         ...nextState,
+        mistakes: state.mistakes, // Don't alter mistakes on redo either
+        isGameOver: state.isGameOver, // Don't alter game over on redo
         undoStack: [
           ...state.undoStack,
           {
